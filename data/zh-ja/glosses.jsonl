@@ -1216,7 +1216,7 @@
 {"word": "非洲", "pinyin": "Fēizhōu", "gloss": ["アフリカ"], "qa": "machine_backed"}
 {"word": "骨", "pinyin": "gǔ", "gloss": ["骨", "気骨"], "qa": "machine_backed"}
 {"word": "中共中央", "pinyin": "Zhōnggòng Zhōngyāng", "gloss": ["中国共産党中央"], "qa": "machine_backed"}
-{"word": "境", "pinyin": "jìng", "gloss": ["境界", "territory", "境遇"], "qa": "machine_backed"}
+{"word": "境", "pinyin": "jìng", "gloss": ["境界", "領域", "境遇"], "qa": "machine_backed"}
 {"word": "宝玉", "pinyin": "bǎoyù", "gloss": ["宝玉", "宝石"], "qa": "machine_backed"}
 {"word": "竹", "pinyin": "zhú", "gloss": ["竹"], "qa": "machine_backed"}
 {"word": "僧", "pinyin": "sēng", "gloss": ["僧", "僧侶"], "qa": "machine_backed"}
@@ -1351,7 +1351,7 @@
 {"word": "爹爹", "pinyin": "diēdie", "gloss": ["父さん"], "qa": "machine_backed"}
 {"word": "最为", "pinyin": "zuìwéi", "gloss": ["最も"], "qa": "machine_backed"}
 {"word": "婚", "pinyin": "hūn", "gloss": ["結婚", "婚姻"], "qa": "machine_backed"}
-{"word": "首页", "pinyin": "shǒuyè", "gloss": ["トップページ", "first page"], "qa": "machine_backed"}
+{"word": "首页", "pinyin": "shǒuyè", "gloss": ["トップページ", "最初のページ"], "qa": "machine_backed"}
 {"word": "礼部", "pinyin": "Lǐbù", "gloss": ["礼部"], "qa": "machine_backed"}
 {"word": "根据地", "pinyin": "gēnjùdì", "gloss": ["根拠地"], "qa": "machine_backed"}
 {"word": "沙", "pinyin": "shā", "gloss": ["砂"], "qa": "machine_backed"}
@@ -2577,7 +2577,7 @@
 {"word": "壮族", "pinyin": "Zhuàngzú", "gloss": ["チワン族"], "qa": "machine_backed"}
 {"word": "一周", "pinyin": "yīzhōu", "gloss": ["1週間", "一周"], "qa": "machine_backed"}
 {"word": "围攻", "pinyin": "wéigōng", "gloss": ["包囲攻撃する"], "qa": "machine_backed"}
-{"word": "投产", "pinyin": "tóuchǎn", "gloss": ["operation開始", "生産開始"], "qa": "machine_backed"}
+{"word": "投产", "pinyin": "tóuchǎn", "gloss": ["操業開始", "生産開始"], "qa": "machine_backed"}
 {"word": "北上", "pinyin": "běishàng", "gloss": ["北上する"], "qa": "machine_backed"}
 {"word": "侄", "pinyin": "zhí", "gloss": ["甥", "おい"], "qa": "machine_backed"}
 {"word": "惟一", "pinyin": "wéiyī", "gloss": ["唯一の"], "qa": "machine_backed"}
@@ -3650,7 +3650,7 @@
 {"word": "帕", "pinyin": "pà", "gloss": ["ハンカチ", "パスカル"], "qa": "machine_backed"}
 {"word": "爱尔兰", "pinyin": "Ài'ěrlán", "gloss": ["アイルランド"], "qa": "machine_backed"}
 {"word": "钾", "pinyin": "jiǎ", "gloss": ["カリウム"], "qa": "machine_backed"}
-{"word": "亯", "gloss": ["「享」の古字"], "qa": "llm_fixed"}
+{"word": "亯", "pinyin": "xiǎng", "gloss": ["「享」の古字"], "qa": "llm_fixed"}
 {"word": "党政", "pinyin": "dǎngzhèng", "gloss": ["党と政府"], "qa": "machine_backed"}
 {"word": "咧", "pinyin": "liě", "gloss": ["口を広げる", "にやりと"], "qa": "llm_ok"}
 {"word": "嶄", "pinyin": "zhǎn", "gloss": ["ひときわ高い", "際立つ"], "qa": "llm_ok"}
@@ -11623,7 +11623,7 @@
 {"word": "冷清", "pinyin": "lěngqing", "gloss": ["ひっそりしている", "寂しい"], "qa": "machine_backed"}
 {"word": "勾引", "pinyin": "gōuyǐn", "gloss": ["誘惑する", "そそのかす"], "qa": "machine_backed"}
 {"word": "医科", "pinyin": "yīkē", "gloss": ["医学部", "医科"], "qa": "machine_backed"}
-{"word": "原生", "pinyin": "yuánshēng", "gloss": ["原生の", "native"], "qa": "machine_backed"}
+{"word": "原生", "pinyin": "yuánshēng", "gloss": ["原生の", "ネイティブの"], "qa": "machine_backed"}
 {"word": "吴越", "pinyin": "Wú-Yuè", "gloss": ["呉と越", "呉越"], "qa": "machine_backed"}
 {"word": "员额", "pinyin": "yuán'é", "gloss": ["定員"], "qa": "machine_backed"}
 {"word": "喀斯特", "pinyin": "kāsītè", "gloss": ["カルスト"], "qa": "machine_backed"}
@@ -12469,7 +12469,7 @@
 {"word": "大蒜", "pinyin": "dàsuàn", "gloss": ["ニンニク"], "qa": "machine_backed"}
 {"word": "天道", "pinyin": "tiāndào", "gloss": ["天道", "自然の理"], "qa": "machine_backed"}
 {"word": "夭", "pinyin": "yāo", "gloss": ["若死にする", "みずみずしい"], "qa": "machine_backed"}
-{"word": "女家", "pinyin": "nǚjiā", "gloss": ["花嫁の実家", "嫁side"], "qa": "llm_fixed"}
+{"word": "女家", "pinyin": "nǚjiā", "gloss": ["花嫁の実家", "嫁側"], "qa": "llm_fixed"}
 {"word": "安好", "pinyin": "ānhǎo", "gloss": ["息災である"], "qa": "llm_ok"}
 {"word": "尊师", "pinyin": "zūnshī", "gloss": ["師を敬う", "先生への敬称"], "qa": "llm_ok"}
 {"word": "小道", "pinyin": "xiǎodào", "gloss": ["小道", "裏情報"], "qa": "machine_backed"}
@@ -21574,7 +21574,7 @@
 {"word": "络腮胡子", "pinyin": "luòsāi húzi", "gloss": ["ほおひげ", "あごひげ"], "qa": "machine_backed"}
 {"word": "缧", "pinyin": "léi", "gloss": ["囚人を縛る縄"], "qa": "llm_ok"}
 {"word": "老江湖", "pinyin": "lǎo jiānghú", "gloss": ["世慣れた人", "古株"], "qa": "machine_backed"}
-{"word": "老狐狸", "pinyin": "lǎo húli", "gloss": ["古だぬき", "старый ずる賢い人"], "qa": "machine_backed"}
+{"word": "老狐狸", "pinyin": "lǎo húli", "gloss": ["古だぬき", "ずる賢い人"], "qa": "machine_backed"}
 {"word": "脘", "pinyin": "wǎn", "gloss": ["胃の内腔"], "qa": "llm_ok"}
 {"word": "自爱", "pinyin": "zì'ài", "gloss": ["自愛する", "身を大切にする"], "qa": "machine_backed"}
 {"word": "舒舒服服", "pinyin": "shūshufufu", "gloss": ["ゆったりと", "快適に"], "qa": "llm_ok"}
@@ -29142,7 +29142,7 @@
 {"word": "说笑话", "pinyin": "shuō xiàohua", "gloss": ["冗談を言う"], "qa": "machine_backed"}
 {"word": "课时", "pinyin": "kèshí", "gloss": ["授業時間", "コマ数"], "qa": "machine_backed"}
 {"word": "调升", "pinyin": "tiáoshēng", "gloss": ["引き上げる", "昇進させる"], "qa": "machine_backed"}
-{"word": "谋利", "pinyin": "móulì", "gloss": ["利益を figure", "利を図る"], "qa": "machine_backed"}
+{"word": "谋利", "pinyin": "móulì", "gloss": ["利益を図る", "利を図る"], "qa": "machine_backed"}
 {"word": "象限", "pinyin": "xiàngxiàn", "gloss": ["象限"], "qa": "machine_backed"}
 {"word": "贾庆林", "pinyin": "Jiǎ Qìnglín", "gloss": ["賈慶林"], "qa": "machine_backed"}
 {"word": "赏析", "pinyin": "shǎngxī", "gloss": ["鑑賞と分析"], "qa": "machine_backed"}
@@ -29194,7 +29194,7 @@
 {"word": "魁首", "pinyin": "kuíshǒu", "gloss": ["首位", "第一人者"], "qa": "machine_backed"}
 {"word": "鲱鱼", "pinyin": "fēiyú", "gloss": ["ニシン"], "qa": "machine_backed"}
 {"word": "鶗", "pinyin": "tí", "gloss": ["鶗鴂(ホトトギス)の鶗"], "qa": "llm_ok"}
-{"word": "鸨", "pinyin": "bǎo", "gloss": ["ノガン", "women 女将"], "qa": "machine_backed"}
+{"word": "鸨", "pinyin": "bǎo", "gloss": ["ノガン", "女将"], "qa": "machine_backed"}
 {"word": "鸪", "pinyin": "gū", "gloss": ["鷓鴣の鴣"], "qa": "llm_ok"}
 {"word": "鹰派", "pinyin": "yīngpài", "gloss": ["タカ派"], "qa": "machine_backed"}
 {"word": "麦角", "pinyin": "màijiǎo", "gloss": ["麦角"], "qa": "machine_backed"}
@@ -38338,7 +38338,7 @@
 {"word": "菅", "pinyin": "jiān", "gloss": ["チガヤ類の草", "かや"], "qa": "llm_fixed"}
 {"word": "萧然", "pinyin": "xiāorán", "gloss": ["物寂しい"], "qa": "machine_backed"}
 {"word": "落发", "pinyin": "luòfà", "gloss": ["剃髪する", "出家する"], "qa": "machine_backed"}
-{"word": "蒙文", "pinyin": "Ménɡwén", "gloss": ["モンゴル文字", "モンゴル語"], "qa": "machine_backed"}
+{"word": "蒙文", "pinyin": "Méngwén", "gloss": ["モンゴル文字", "モンゴル語"], "qa": "machine_backed"}
 {"word": "蓝灰色", "pinyin": "lánhuīsè", "gloss": ["青灰色"], "qa": "llm_ok"}
 {"word": "蕞", "pinyin": "zuì", "gloss": ["ごく小さい"], "qa": "llm_ok"}
 {"word": "蕴蓄", "pinyin": "yùnxù", "gloss": ["蓄える", "内に秘める"], "qa": "machine_backed"}
@@ -41499,7 +41499,7 @@
 {"word": "营子", "pinyin": "yíngzi", "gloss": ["集落", "村"], "qa": "machine_backed"}
 {"word": "葱白", "pinyin": "cōngbái", "gloss": ["ネギの白根"], "qa": "machine_backed"}
 {"word": "蒙师", "pinyin": "méngshī", "gloss": ["手習いの師"], "qa": "llm_ok"}
-{"word": "蒙族", "pinyin": "Ménɡzú", "gloss": ["モンゴル族"], "qa": "machine_backed"}
+{"word": "蒙族", "pinyin": "Méngzú", "gloss": ["モンゴル族"], "qa": "machine_backed"}
 {"word": "蓬蓬勃勃", "pinyin": "péngpéngbóbó", "gloss": ["生き生きと", "盛んな"], "qa": "llm_ok"}
 {"word": "蔺", "pinyin": "lìn", "gloss": ["イグサ", "藺"], "qa": "machine_backed"}
 {"word": "薏", "pinyin": "yì", "gloss": ["ハトムギ"], "qa": "machine_backed"}
@@ -44723,7 +44723,7 @@
 {"word": "唱诗", "pinyin": "chàngshī", "gloss": ["聖歌を歌う"], "qa": "machine_backed"}
 {"word": "善有善报", "pinyin": "shàn yǒu shàn bào", "gloss": ["善には善報"], "qa": "llm_ok"}
 {"word": "喜上加喜", "pinyin": "xǐ shàng jiā xǐ", "gloss": ["慶事が重なる"], "qa": "llm_ok"}
-{"word": "喜娘", "pinyin": "xǐniáng", "gloss": ["婚礼の付添women", "介添え役"], "qa": "machine_backed"}
+{"word": "喜娘", "pinyin": "xǐniáng", "gloss": ["婚礼の付添い女性", "介添え役"], "qa": "machine_backed"}
 {"word": "喜来登", "pinyin": "Xǐláidēng", "gloss": ["シェラトン"], "qa": "machine_backed"}
 {"word": "喜雨", "pinyin": "xǐyǔ", "gloss": ["恵みの雨"], "qa": "machine_backed"}
 {"word": "喟叹", "pinyin": "kuìtàn", "gloss": ["嘆息する"], "qa": "llm_ok"}
@@ -46505,7 +46505,7 @@
 {"word": "地缘政治学", "pinyin": "dì yuán zhèng zhì xué", "gloss": ["地政学"], "qa": "machine_backed"}
 {"word": "地鼠", "pinyin": "dì shǔ", "gloss": ["ジリス", "モグラ類"], "qa": "llm_ok"}
 {"word": "坌", "pinyin": "bèn", "gloss": ["土ぼこり", "掘り起こす"], "qa": "machine_backed"}
-{"word": "坐班", "pinyin": "zuò bān", "gloss": ["office勤務する"], "qa": "machine_backed"}
+{"word": "坐班", "pinyin": "zuò bān", "gloss": ["オフィス勤務する"], "qa": "machine_backed"}
 {"word": "块垒", "pinyin": "kuài lěi", "gloss": ["胸のつかえ", "わだかまり"], "qa": "machine_backed"}
 {"word": "坚如磐石", "pinyin": "jiān rú pán shí", "gloss": ["盤石だ", "揺るぎない"], "qa": "machine_backed"}
 {"word": "垆", "pinyin": "lú", "gloss": ["黒い硬土", "酒場の台"], "qa": "llm_ok"}
@@ -48943,7 +48943,7 @@
 {"word": "留党察看", "pinyin": "liúdǎngchákàn", "gloss": ["党籍留保処分"], "qa": "llm_ok"}
 {"word": "留别", "pinyin": "liúbié", "gloss": ["別れに詩文を残す"], "qa": "llm_ok"}
 {"word": "留园", "pinyin": "Liúyuán", "gloss": ["留園（蘇州の庭園）"], "qa": "machine_backed"}
-{"word": "畛域", "pinyin": "zhěnyù", "gloss": ["境界", "territory"], "qa": "machine_backed"}
+{"word": "畛域", "pinyin": "zhěnyù", "gloss": ["境界", "領域"], "qa": "machine_backed"}
 {"word": "疏不间亲", "pinyin": "shūbùjiànqīn", "gloss": ["疎は親を隔てず"], "qa": "llm_ok"}
 {"word": "疏落", "pinyin": "shūluò", "gloss": ["まばらな", "散在した"], "qa": "machine_backed"}
 {"word": "疯人院", "pinyin": "fēngrényuàn", "gloss": ["精神病院"], "qa": "machine_backed"}
@@ -49432,7 +49432,7 @@
 {"word": "儿茶", "pinyin": "érchá", "gloss": ["阿仙薬", "カテキュー"], "qa": "machine_backed"}
 {"word": "充值卡", "pinyin": "chōngzhíkǎ", "gloss": ["プリペイドカード"], "qa": "machine_backed"}
 {"word": "光棍汉", "pinyin": "guānggùnhàn", "gloss": ["独身男"], "qa": "llm_ok"}
-{"word": "光电子学", "pinyin": "guāngdiànzǐxué", "gloss": ["光electronics", "光電子工学"], "qa": "machine_backed"}
+{"word": "光电子学", "pinyin": "guāngdiànzǐxué", "gloss": ["光エレクトロニクス", "光電子工学"], "qa": "machine_backed"}
 {"word": "光电池", "pinyin": "guāngdiànchí", "gloss": ["光電池", "太陽電池"], "qa": "machine_backed"}
 {"word": "光笔", "pinyin": "guāngbǐ", "gloss": ["ライトペン"], "qa": "machine_backed"}
 {"word": "免开尊口", "pinyin": "miǎn kāi zūn kǒu", "gloss": ["言うだけ無駄"], "qa": "llm_ok"}
@@ -53550,7 +53550,7 @@
 {"word": "杆秤", "pinyin": "gǎnchèng", "gloss": ["さおばかり"], "qa": "machine_backed"}
 {"word": "李泽厚", "pinyin": "Lǐ Zéhòu", "gloss": ["李沢厚", "中国の思想家"], "qa": "machine_backed"}
 {"word": "李长春", "pinyin": "Lǐ Chángchūn", "gloss": ["李長春", "中国の政治家"], "qa": "machine_backed"}
-{"word": "材积", "pinyin": "cáijī", "gloss": ["материал材積", "木材の体積"], "qa": "machine_backed"}
+{"word": "材积", "pinyin": "cáijī", "gloss": ["材積", "木材の体積"], "qa": "machine_backed"}
 {"word": "条案", "pinyin": "tiáo'àn", "gloss": ["細長い机"], "qa": "machine_backed"}
 {"word": "来劲儿", "pinyin": "láijìnr", "gloss": ["張り切る", "調子づく"], "qa": "llm_ok"}
 {"word": "杨利伟", "pinyin": "Yáng Lìwěi", "gloss": ["楊利偉", "中国初の宇宙飛行士"], "qa": "machine_backed"}
@@ -53624,7 +53624,7 @@
 {"word": "水碓", "pinyin": "shuǐduì", "gloss": ["水車の唐臼"], "qa": "llm_ok"}
 {"word": "水程", "pinyin": "shuǐchéng", "gloss": ["水路の道のり", "航程"], "qa": "machine_backed"}
 {"word": "水纹", "pinyin": "shuǐwén", "gloss": ["波紋", "水の模様"], "qa": "machine_backed"}
-{"word": "水至清则无鱼", "pinyin": "shuǐ zhì qīng zé wú yú", "gloss": ["water清ければ魚棲まず"], "qa": "machine_backed"}
+{"word": "水至清则无鱼", "pinyin": "shuǐ zhì qīng zé wú yú", "gloss": ["水清ければ魚棲まず"], "qa": "machine_backed"}
 {"word": "水虱", "pinyin": "shuǐshī", "gloss": ["ミズムシ", "ウオジラミ"], "qa": "llm_fixed"}
 {"word": "求仁得仁", "pinyin": "qiú rén dé rén", "gloss": ["望みどおりになる"], "qa": "llm_ok"}
 {"word": "求全责备", "pinyin": "qiúquán zébèi", "gloss": ["完璧を求める", "粗探しする"], "qa": "machine_backed"}
@@ -59170,7 +59170,7 @@
 {"word": "雅言", "pinyin": "yǎyán", "gloss": ["標準語", "正しい言葉"], "qa": "machine_backed"}
 {"word": "集部", "pinyin": "jíbù", "gloss": ["集部（詩文の部）"], "qa": "machine_backed"}
 {"word": "雌伏", "pinyin": "cífú", "gloss": ["雌伏する", "身を潜める"], "qa": "machine_backed"}
-{"word": "雙", "pinyin": "shuāng", "gloss": ["двойной", "対の", "偶数の"], "qa": "machine_backed"}
+{"word": "雙", "pinyin": "shuāng", "gloss": ["二つの", "対の", "偶数の"], "qa": "machine_backed"}
 {"word": "雨棚", "pinyin": "yǔpéng", "gloss": ["雨よけの庇"], "qa": "llm_ok"}
 {"word": "雪杖", "pinyin": "xuězhàng", "gloss": ["スキーのストック"], "qa": "machine_backed"}
 {"word": "零卖", "pinyin": "língmài", "gloss": ["小売りする", "ばら売り"], "qa": "machine_backed"}
@@ -62218,7 +62218,7 @@
 {"word": "刨坑", "pinyin": "páokēng", "gloss": ["穴を掘る"], "qa": "machine_backed"}
 {"word": "刨工", "pinyin": "bàogōng", "gloss": ["平削り工", "プレーナー工"], "qa": "machine_backed"}
 {"word": "刨根儿", "pinyin": "páogēnr", "gloss": ["根掘り葉掘り聞く"], "qa": "machine_backed"}
-{"word": "利上滚利", "pinyin": "lìshàngɡǔnlì", "gloss": ["複利", "利が利を生む"], "qa": "machine_backed"}
+{"word": "利上滚利", "pinyin": "lìshànggǔnlì", "gloss": ["複利", "利が利を生む"], "qa": "machine_backed"}
 {"word": "利人", "pinyin": "lìrén", "gloss": ["人を利する"], "qa": "llm_ok"}
 {"word": "利便", "pinyin": "lìbiàn", "gloss": ["便利な", "便宜を図る"], "qa": "machine_backed"}
 {"word": "利嘴", "pinyin": "lìzuǐ", "gloss": ["口が達者", "舌鋒"], "qa": "machine_backed"}
@@ -63375,7 +63375,7 @@
 {"word": "吃软饭", "pinyin": "chī ruǎnfàn", "gloss": ["女に養われる", "ヒモになる"], "qa": "llm_ok"}
 {"word": "吃里爬外", "pinyin": "chī lǐ pá wài", "gloss": ["内を裏切り外に通じる"], "qa": "machine_backed"}
 {"word": "吃错药", "pinyin": "chī cuò yào", "gloss": ["どうかしている", "変な言動"], "qa": "machine_backed"}
-{"word": "吃闭门羹", "pinyin": "chī bìménɡēng", "gloss": ["門前払いを食う"], "qa": "machine_backed"}
+{"word": "吃闭门羹", "pinyin": "chī bìméngēng", "gloss": ["門前払いを食う"], "qa": "machine_backed"}
 {"word": "吃零嘴", "pinyin": "chī língzuǐ", "gloss": ["間食する"], "qa": "machine_backed"}
 {"word": "吃饭防噎", "pinyin": "chī fàn fáng yē", "gloss": ["用心を怠らない"], "qa": "llm_ok"}
 {"word": "吃饱", "pinyin": "chī bǎo", "gloss": ["満腹になる"], "qa": "llm_ok"}
@@ -64086,7 +64086,7 @@
 {"word": "团音", "pinyin": "tuányīn", "gloss": ["団音"], "qa": "llm_ok"}
 {"word": "囤粮", "pinyin": "tún liáng", "gloss": ["食糧を買いだめする"], "qa": "machine_backed"}
 {"word": "囤聚", "pinyin": "túnjù", "gloss": ["買い占める", "ため込む"], "qa": "llm_ok"}
-{"word": "囤货", "pinyin": "túnhuò", "gloss": ["商品を buy 溜めする", "在庫を抱える"], "qa": "machine_backed"}
+{"word": "囤货", "pinyin": "túnhuò", "gloss": ["商品を買い溜めする", "在庫を抱える"], "qa": "machine_backed"}
 {"word": "园寝", "pinyin": "yuánqǐn", "gloss": ["皇族の墓所"], "qa": "llm_ok"}
 {"word": "园陵", "pinyin": "yuánlíng", "gloss": ["帝王の陵墓"], "qa": "machine_backed"}
 {"word": "困人", "pinyin": "kùnrén", "gloss": ["眠気を誘う", "人を疲れさせる"], "qa": "machine_backed"}
@@ -70163,7 +70163,7 @@
 {"word": "材种", "pinyin": "cáizhǒng", "gloss": ["材種", "木材の種類"], "qa": "machine_backed"}
 {"word": "材能", "pinyin": "cáinéng", "gloss": ["才能"], "qa": "machine_backed"}
 {"word": "村人", "pinyin": "cūnrén", "gloss": ["村人", "村民"], "qa": "machine_backed"}
-{"word": "村俗", "pinyin": "cūnsú", "gloss": ["田舎びた", "village の風習"], "qa": "machine_backed"}
+{"word": "村俗", "pinyin": "cūnsú", "gloss": ["田舎びた", "村の風習"], "qa": "machine_backed"}
 {"word": "村坞", "pinyin": "cūnwù", "gloss": ["村里", "集落"], "qa": "llm_ok"}
 {"word": "村墟", "pinyin": "cūnxū", "gloss": ["村里", "村の市"], "qa": "machine_backed"}
 {"word": "村夫俗子", "pinyin": "cūnfū-súzǐ", "gloss": ["田舎者", "無学な人"], "qa": "llm_ok"}
@@ -83518,7 +83518,7 @@
 {"word": "许信良", "pinyin": "Xǔ Xìnliáng", "gloss": ["許信良(人名)"], "qa": "machine_backed"}
 {"word": "许其亮", "pinyin": "Xǔ Qíliàng", "gloss": ["許其亮(人名)"], "qa": "machine_backed"}
 {"word": "许字", "pinyin": "xǔzì", "gloss": ["娘の縁談を許す"], "qa": "llm_ok"}
-{"word": "评法批儒", "pinyin": "pínɡfǎ pīrú", "gloss": ["法家評価儒家批判"], "qa": "llm_ok"}
+{"word": "评法批儒", "pinyin": "píngfǎ pīrú", "gloss": ["法家評価儒家批判"], "qa": "llm_ok"}
 {"word": "词韵", "pinyin": "cíyùn", "gloss": ["詞の押韻"], "qa": "llm_ok"}
 {"word": "译笔", "pinyin": "yìbǐ", "gloss": ["訳文の筆致"], "qa": "machine_backed"}
 {"word": "试笔", "pinyin": "shìbǐ", "gloss": ["試し書き"], "qa": "llm_ok"}
