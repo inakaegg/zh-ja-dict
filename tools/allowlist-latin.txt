@@ -1,0 +1,196 @@
+# 訳文に現れてよいラテン文字の語
+#
+# 日本語も中国語も、略語・単位・固有名詞・一部の外来語をラテン文字のまま書く。
+# 一方、生成の失敗で英語の単語がそのまま残った訳（`office勤務する`、`street gang` など）も
+# 同じ見た目になる。両者を機械で見分ける方法が無いため、
+# 「使ってよい語」を人手で確かめてここへ並べ、それ以外を tools/validate_data.py が違反として報告する。
+#
+# 語の切り出しは「連続するラテン文字」単位。`X光` なら `X`、`Big5コード` なら `Big`。
+# 数字・記号・漢字・かなは区切りとして扱う。ピンインの欄は対象外。
+#
+# 語を足すときは、その語がその言語で実際にそう書かれることを確かめてから足す。
+# 迷ったら足さずに、訳のほうを直す。
+
+# --- 単位・数式・記号 ---
+cc
+cm
+g
+m
+pH
+ppm
+II
+x
+y
+
+# --- 国際機関・国名・地域 ---
+APEC
+ASEAN
+BRICS
+EC
+EU
+FAO
+GATT
+ILO
+NATO
+OECD
+OPEC
+PLO
+UAE
+WTO
+YMCA
+
+# --- 企業・製品・作品の固有名詞 ---
+ANA
+AOL
+ASUS
+BASF
+BBC
+BMW
+Bluetooth
+Brugada
+Comic
+eMule
+Flash
+galgame
+GM
+JWT
+KFC
+Mac
+Market
+MetaFont
+MGM
+NHK
+Petri
+PostScript
+README
+Synclavier
+UBS
+Windows
+YOSAKOI
+
+# --- 情報・通信 ---
+App
+ATM
+Big
+CBD
+CC
+CD
+CPU
+CS
+DV
+DVD
+Esc
+FM
+GB
+GPS
+HDD
+IC
+ID
+IP
+IT
+LAN
+LOFT
+MMS
+MRT
+MT
+NC
+OK
+OS
+PC
+PDA
+PHS
+PK
+PR
+PVC
+ROM
+SIM
+SP
+USB
+VR
+WAN
+
+# --- 医療・科学・工業 ---
+ADHD
+BCG
+BHC
+CT
+DDT
+DNA
+FRP
+HBs
+IH
+LPG
+MICE
+MRI
+PCB
+PCR
+PM
+RDX
+RF
+RNA
+SARS
+TNT
+UFO
+UHF
+VHF
+
+# --- 試験・資格・報道 ---
+AFP
+AP
+EMS
+EQ
+FBI
+IELTS
+KGB
+SWAT
+TOEFL
+
+# --- 音楽・スポーツ・娯楽 ---
+ACE
+BGM
+boss
+cos
+cosplay
+flag
+house
+KO
+KTV
+live
+Lo
+look
+marcato
+MF
+play
+SF
+
+# --- 服飾・生活 ---
+AA
+BP
+LDK
+polo
+POLO
+
+# --- 単独の英字（型・形状・等級・かな行の表記） ---
+A
+B
+C
+D
+E
+e
+F
+f
+G
+H
+I
+K
+M
+O
+P
+Q
+ra
+S
+T
+U
+V
+X
+ya
