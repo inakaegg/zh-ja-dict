@@ -2,7 +2,7 @@
 
 中国語と日本語の対訳データ集です。学習アプリで単語の訳を表示することを目的に作りました。訳文はすべて LLM で生成しています。
 
-- 3ファイル・128,545行・約12MB。すべて JSON Lines（1行1語、UTF-8、LF）
+- 3ファイル・140,015行・約14MB。すべて JSON Lines（1行1語、UTF-8、LF）
 - 方向は中日（中国語→日本語）と日中（日本語→中国語）の2つ
 - 検品の度合いはファイルごとに違います。中日の `glosses.jsonl` だけが2段階の検品を通っています
 - **[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)** で提供します（[ライセンス](#ライセンス)）
@@ -11,7 +11,7 @@
 
 | ファイル | 方向 | 行数 | 内容 | 検品 |
 |---|---|---|---|---|
-| `data/zh-ja/glosses.jsonl` | 中日 | 83,993 | 簡潔な日本語訳（ピンイン付き） | 機械照合 + LLM校閲 |
+| `data/zh-ja/glosses.jsonl` | 中日 | 95,463 | 簡潔な日本語訳（ピンイン付き）。うち11,470語はHSKの級を持つ | 機械照合 + LLM校閲 |
 | `data/zh-ja/polyphonic.jsonl` | 中日 | 4,552 | 多音字を含む語の、読み別の語義 | なし |
 | `data/ja-zh/glosses.jsonl` | 日中 | 40,000 | 中国語訳（ピンイン付き） | 機械照合のみ |
 
@@ -28,21 +28,31 @@
 | `gloss` | string の配列 | 必須 | 日本語訳。0〜3件。0件のときは `unsure: true` が付きます |
 | `qa` | string | 必須 | 検品の区分。`machine_backed` / `llm_ok` / `llm_fixed` のどれか |
 | `unsure` | true | 任意 | 訳の確からしさに不安がある印。[unsure の意味](#unsure-の意味)を参照 |
+| `hsk` | 整数 | 任意 | HSKの級（1〜7）。持つ行はHSKの語彙です。[HSKの級](#hskの級)を参照 |
 
 ```json
 {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"}
 {"word": "幖", "pinyin": "biāo", "gloss": [], "unsure": true, "qa": "machine_backed"}
+{"word": "爱好", "pinyin": "ài hào", "gloss": ["趣味", "愛好する"], "qa": "machine_backed", "hsk": 2}
 ```
 
 行の内訳は次の3つで、合計が行数に一致します。
 
 | 区分 | 件数 |
 |---|---|
-| `unsure` なし | 83,771 |
+| `unsure` なし | 95,241 |
 | `unsure: true`、`gloss` は1件以上 | 219 |
 | `unsure: true`、`gloss` は空配列 | 3 |
 
-`qa` の内訳は `machine_backed` 56,368件、`llm_ok` 26,801件、`llm_fixed` 824件です。
+`qa` の内訳は `machine_backed` 66,815件、`llm_ok` 27,792件、`llm_fixed` 856件です。
+
+`hsk` を持つ行は11,470件で、これは区分ではなく属性です（`unsure` と同時に立つことはありえます。現在そういう行はありません）。
+
+### 並び順
+
+先頭の83,993行は、分かち書き辞書（cppjieba）の頻度の高い順に並んでいます。
+そのあとに続く11,470行がHSKの語彙で、**級の昇順**（同じ級の中は元データの並び）です。
+頻度の数値そのものは収録していないため、行番号を頻度の代わりに使うことはできません。
 
 ### data/zh-ja/polyphonic.jsonl
 
@@ -104,16 +114,36 @@
 
 `polyphonic.jsonl` だけは事情が違います。このファイルの `unsure: true` は91行あり、**そのすべてが `senses` の空配列と対になっています**。訳を持つ行に `unsure` が立つことはありません。とはいえ、判定を `unsure` の有無ではなく `senses` の長さで書いておけば、3ファイルを同じ扱いにできます。
 
+## HSKの級
+
+`data/zh-ja/glosses.jsonl` の11,470行が `hsk` を持ちます。この11,470語は、残りの83,993語と**1語も重なりません**。中日の見出し語を選ぶときにHSKの語彙を除いていたため、統合しても重複が生じませんでした。
+
+| 級 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 計 |
+|---|---|---|---|---|---|---|---|---|
+| 語数 | 507 | 754 | 964 | 980 | 1,109 | 1,550 | 5,606 | 11,470 |
+
+### 級は2つの版が混ざっています
+
+HSKには2.0（6級まで）と3.0（7級まで）があります。**この欄はHSK 3.0の級を使い、3.0に級がない501語だけHSK 2.0の級を入れています。**
+
+そのため、**同じ数字が2つの尺度をまたぎます**。とくに6級は1,550語のうち**427語（27.5%）が2.0の尺度**です。
+
+| 級 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| 2.0由来 | 1 | 4 | 11 | 8 | 50 | **427** | 0 |
+
+**どの語が2.0由来かは、データからは判別できません。** 「6級以上を難語とする」のような絞り込みをするときは、この点を承知して使ってください。
+
 ## データを検証する
 
 `tools/validate_data.py` が3ファイルを全件読み、形式の違反を報告します。Python 3.9以上があれば動きます。追加のインストールは要りません。
 
 ```console
 $ python3 tools/validate_data.py
-## zh-ja/glosses.jsonl（83,993行）
-  通常                        83,771
+## zh-ja/glosses.jsonl（95,463行）
+  通常                        95,241
   ...
-合計 128,545行
+合計 140,015行
 違反 0 件
 ```
 
@@ -133,12 +163,22 @@ $ python3 tools/validate_data.py
 
 訳文はすべて LLM（Claude Opus）で生成しました。市販辞書やOS付属辞書の語義本文は生成の入力に使っておらず、本データにも含まれません。見出し語をどう選んだかは[出どころ](#出どころ)にまとめています。
 
-生成に使ったスクリプトと選定元のデータは、このリポジトリに含めていません。したがって、ここにあるデータを同じ手順で作り直すことはできません。
+生成に使ったスクリプトと選定元のデータは、このリポジトリに含めていません。HSKの級の元になった語彙データも同じです。**このリポジトリにあるものだけでは、データを作り直せませんし、出どころとの突き合わせも再現できません。**
 
 中日の `glosses.jsonl` だけが、生成後に2段階の検品を通っています。
 
-1. **機械照合** — 既存の辞書資源と突き合わせ、裏付けが取れた56,368語を `machine_backed` としました
-2. **LLM校閲** — 照合で裏付けが取れなかった28,492語を LLM に読ませ、867語を「語として成立しない」として除外し、824語の訳を修正しました。残りが `llm_ok` 26,801語と `llm_fixed` 824語です
+1. **機械照合** — 既存の辞書資源と突き合わせ、裏付けが取れた語を `machine_backed` とする
+2. **LLM校閲** — 照合で裏付けが取れなかった語を LLM に読ませ、妥当なら `llm_ok`、直したら `llm_fixed` とする
+
+このファイルは2回に分けて作りました。**どちらも同じ2段階の検品を通していますが、件数は別々です。**
+
+| | 語数 | `machine_backed` | `llm_ok` | `llm_fixed` |
+|---|---|---|---|---|
+| 先に作った分 | 83,993 | 56,368 | 26,801 | 824 |
+| あとで足したHSK分 | 11,470 | 10,447 | 991 | 32 |
+| **合計** | **95,463** | **66,815** | **27,792** | **856** |
+
+先に作った分では、LLM校閲の対象が28,492語で、うち867語を「語として成立しない」として除外しました。表の83,993件は除外後の数字です。
 
 この検品には限界があります。2026年9月の点検で、**中日の `glosses.jsonl` から、英語やロシア語の単語が日本語訳に食い込んだ行が17件見つかりました**（`operation開始`、`материал材積` など）。`polyphonic.jsonl` にも同種の混入が7件ありました。いずれも[修正履歴](#修正履歴)のとおり直しています。
 
@@ -161,6 +201,34 @@ JMdict は [Electronic Dictionary Research and Development Group (EDRDG)](https:
 
 市販辞書は**見出し語の照合にのみ使用し、語義本文は生成の入力にも成果物にも含めていません**。
 
+**HSKの級（`data/zh-ja/glosses.jsonl` の `hsk`）** — 級は [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)（MITライセンス、commit `7ac65bf1a6387d35f1ade478906172a19311c7f9`）から採りました。同じ資料からHSK語の見出し語・ピンインも採っています。日本語訳は、そこに含まれる英語の語義を使わず、独立に生成しました。
+
+MITライセンスは著作権表示の保持を求めます。原本の表示をそのまま載せます。
+
+```
+MIT License
+
+Copyright (c) 2026 Yanis Zafirópulos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## 既知の限界
 
 - 訳は簡潔さを優先しており、語法・用例・品詞情報を含みません
@@ -171,9 +239,19 @@ JMdict は [Electronic Dictionary Research and Development Group (EDRDG)](https:
 - 訳が付いていない語があります。中日3語、多音字91語、日中942語で、いずれも `unsure: true` が立っています
 - 日中方向で、日本語の文法用語の訳にかな表記とローマ字表記が混在します（`ら行` と `日语ra行`、`ya行`）。表記を統一していません
 - 訳の言語混入は上記の検証スクリプトが検出しますが、**誤訳そのものは検出できません**
+- HSK語のピンインは音節ごとに空白を入れます（`爱好` → `ài hào`）。それ以外の語は繋げて書くほうが多数です（`星系` → `xīngxì`）。**同じファイルの中で表記が揃っていません。** HSK分は出どころのデータの綴りをそのまま使っており、空白が音節の境界を示す情報を持つため、繋げる向きへの変換はしていません
 - 言語混入の検査にも抜けがあります。許可リストには一般的な英単語（`live` `house` `look` `boss` `play` `flag`）や単独の英字（`A`〜`X`）が載っており、これらの語で新しい生成失敗が起きても検出できません。また許可リストは中日と日中で共用のため、片方でだけ正当な語がもう片方でも通ります
 
 ## 修正履歴
+
+### 2026-09-01 — HSK語彙の統合
+
+`data/zh-ja/glosses.jsonl` へHSKの11,470語を追記しました（83,993行 → 95,463行）。既存の83,993行は1バイトも変えていません。
+
+- 追記した語は既存の見出し語と**1語も重なりません**
+- 任意キー `hsk` を新設しました（[HSKの級](#hskの級)）
+- 訳は、出どころの資料が持っていた日本語訳（大半が1語）を土台に、別の語義がある語だけ訳を足したものです。平均の訳数は1.01から2.01になりました
+- 訳を足すときも元の訳は残しています。元の訳が入れ替わった23語は、いずれも `qa` が `llm_fixed` で、校閲が誤りを直したものです（`财经` の「財経」→「経済金融」など、中国語を漢字のまま写していた訳の修正）
 
 ### 2026-09-01 — 形式の統一と言語混入の訂正
 
