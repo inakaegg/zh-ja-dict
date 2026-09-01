@@ -247,7 +247,7 @@
 {"word": "三五", "senses": [{"pinyin": "sānwǔ", "gloss": ["三つ五つ", "少数の"]}]}
 {"word": "三亲六故", "senses": [{"pinyin": "sānqīnliùgù", "gloss": ["親戚知人"]}]}
 {"word": "三位一体", "senses": [{"pinyin": "sānwèiyītǐ", "gloss": ["三位一体"]}]}
-{"word": "三八妇女节", "senses": [{"pinyin": "sānbā fùnǚjié", "gloss": ["国際women's day"]}]}
+{"word": "三八妇女节", "senses": [{"pinyin": "sānbā fùnǚjié", "gloss": ["国際女性デー"]}]}
 {"word": "三句话不离本行", "senses": [{"pinyin": "sān jù huà bù lí běnháng", "gloss": ["話が商売に及ぶ"]}]}
 {"word": "三大差别", "senses": [{"pinyin": "sāndà chābié", "gloss": ["三大格差"]}]}
 {"word": "三拇指", "senses": [{"pinyin": "sānmǔzhǐ", "gloss": ["中指"]}]}
@@ -673,7 +673,7 @@
 {"word": "儳", "senses": [], "unsure": true}
 {"word": "儿", "senses": [{"pinyin": "ér", "gloss": ["子供", "息子"]}]}
 {"word": "儿媳妇", "senses": [{"pinyin": "érxífu", "gloss": ["嫁", "息子の妻"]}]}
-{"word": "兀", "senses": [{"pinyin": "wù", "gloss": ["высоく突き出た", "切り株"]}]}
+{"word": "兀", "senses": [{"pinyin": "wù", "gloss": ["高く突き出た", "切り株"]}]}
 {"word": "元元本本", "senses": [{"pinyin": "yuányuánběnběn", "gloss": ["最初から詳しく"]}]}
 {"word": "先是", "senses": [{"pinyin": "xiānshì", "gloss": ["まず初めに", "それより前に"]}]}
 {"word": "光学玻璃", "senses": [{"pinyin": "guāngxué bōli", "gloss": ["光学ガラス"]}]}
@@ -1199,7 +1199,7 @@
 {"word": "国戚", "senses": [{"pinyin": "guó qī", "gloss": ["外戚", "皇族の姻戚"]}]}
 {"word": "国际公法", "senses": [{"pinyin": "guó jì gōng fǎ", "gloss": ["国際公法"]}]}
 {"word": "圆全", "senses": [{"pinyin": "yuánquán", "gloss": ["円満だ", "申し分ない"]}]}
-{"word": "圈儿", "senses": [{"pinyin": "quānr", "gloss": ["輪", "circle", "範囲"]}]}
+{"word": "圈儿", "senses": [{"pinyin": "quānr", "gloss": ["輪", "円", "範囲"]}]}
 {"word": "圈圈", "senses": [{"pinyin": "quānquan", "gloss": ["丸", "輪"]}]}
 {"word": "圌", "senses": [], "unsure": true}
 {"word": "圜", "senses": [{"pinyin": "huán", "gloss": ["取り巻く", "周囲"]}, {"pinyin": "yuán", "gloss": ["円い", "天"]}]}
@@ -1400,7 +1400,7 @@
 {"word": "奶豆腐", "senses": [{"pinyin": "nǎidòufu", "gloss": ["乳豆腐", "チーズ状の乳製品"]}]}
 {"word": "奸细", "senses": [{"pinyin": "jiānxi", "gloss": ["スパイ", "回し者"]}]}
 {"word": "好不", "senses": [{"pinyin": "hǎobù", "gloss": ["実に", "なんと"]}]}
-{"word": "好天儿", "senses": [{"pinyin": "hǎotiānr", "gloss": ["good weather", "晴天"]}]}
+{"word": "好天儿", "senses": [{"pinyin": "hǎotiānr", "gloss": ["好天気", "晴天"]}]}
 {"word": "好好先生", "senses": [{"pinyin": "hǎohǎoxiānsheng", "gloss": ["八方美人", "事なかれ主義者"]}]}
 {"word": "好意思", "senses": [{"pinyin": "hǎoyìsi", "gloss": ["よくも平気で", "恥ずかしくない"]}]}
 {"word": "好气儿", "senses": [{"pinyin": "hǎoqìr", "gloss": ["機嫌がよい"]}]}
@@ -1583,7 +1583,7 @@
 {"word": "小水", "senses": [], "unsure": true}
 {"word": "小白脸儿", "senses": [{"pinyin": "xiǎobáiliǎnr", "gloss": ["色白の優男", "ヒモ男"]}]}
 {"word": "小算盘", "senses": [{"pinyin": "xiǎosuànpán", "gloss": ["打算", "小さな計算"]}]}
-{"word": "小老婆", "senses": [{"pinyin": "xiǎolǎopo", "gloss": ["めかけ", "second wifeの妾"]}]}
+{"word": "小老婆", "senses": [{"pinyin": "xiǎolǎopo", "gloss": ["めかけ"]}]}
 {"word": "小聪明", "senses": [{"pinyin": "xiǎocōngming", "gloss": ["小賢しさ", "こざかしさ"]}]}
 {"word": "小肚儿", "senses": [{"pinyin": "xiǎodùr", "gloss": ["下腹"]}]}
 {"word": "小褂儿", "senses": [{"pinyin": "xiǎoguàr", "gloss": ["中国風の肌着"]}]}
@@ -1874,7 +1874,7 @@
 {"word": "扁食", "senses": [{"pinyin": "biǎnshi", "gloss": ["水ギョーザ", "ワンタン"]}]}
 {"word": "扁鹊", "senses": [{"pinyin": "Biǎnquè", "gloss": ["扁鵲", "古代の名医"]}]}
 {"word": "扃", "senses": [{"pinyin": "jiōng", "gloss": ["かんぬき", "閉ざす"]}]}
-{"word": "手不释卷", "senses": [{"pinyin": "shǒubùshìjuàn", "gloss": ["book三昧", "読書に没頭する"]}]}
+{"word": "手不释卷", "senses": [{"pinyin": "shǒubùshìjuàn", "gloss": ["読書三昧", "読書に没頭する"]}]}
 {"word": "手卷", "senses": [{"pinyin": "shǒujuàn", "gloss": ["巻物"]}]}
 {"word": "手巾", "senses": [{"pinyin": "shǒujīn", "gloss": ["タオル", "ハンカチ"]}]}
 {"word": "手底下", "senses": [{"pinyin": "shǒudǐxia", "gloss": ["手元", "部下"]}]}
@@ -2650,7 +2650,7 @@
 {"word": "清水衙门", "senses": [{"pinyin": "qīngshuǐyámen", "gloss": ["役得のない役所"]}]}
 {"word": "清清楚楚", "senses": [{"pinyin": "qīngqingchǔchǔ", "gloss": ["はっきりと"]}]}
 {"word": "清清静静", "senses": [{"pinyin": "qīngqingjìngjìng", "gloss": ["ひっそり静か"]}]}
-{"word": "渐", "senses": [{"pinyin": "jiàn", "gloss": ["しだいに"]}, {"pinyin": "jiān", "gloss": ["浸す", "влияние及ぶ"]}]}
+{"word": "渐", "senses": [{"pinyin": "jiàn", "gloss": ["しだいに"]}, {"pinyin": "jiān", "gloss": ["浸す", "影響が及ぶ"]}]}
 {"word": "渑", "senses": [{"pinyin": "miǎn", "gloss": ["渑池(地名)"]}, {"pinyin": "shéng", "gloss": ["渑水(川の名)"]}]}
 {"word": "渣滓", "senses": [{"pinyin": "zhāzǐ", "gloss": ["かす", "くず"]}]}
 {"word": "温吞", "senses": [{"pinyin": "wēntūn", "gloss": ["ぬるい", "煮え切らない"]}]}
@@ -3064,7 +3064,7 @@
 {"word": "石磨", "senses": [{"pinyin": "shímò", "gloss": ["石臼"]}]}
 {"word": "石龙", "senses": [{"pinyin": "shílóng", "gloss": ["石龍(地名)"]}]}
 {"word": "石龙子", "senses": [{"pinyin": "shílóngzǐ", "gloss": ["トカゲ", "スキンク"]}]}
-{"word": "砉", "senses": [{"pinyin": "huā", "gloss": ["さっと(擬音)"], "unsure": false}, {"pinyin": "xū", "gloss": ["皮を剥ぐ音"]}]}
+{"word": "砉", "senses": [{"pinyin": "huā", "gloss": ["さっと(擬音)"]}, {"pinyin": "xū", "gloss": ["皮を剥ぐ音"]}]}
 {"word": "砌", "senses": [{"pinyin": "qì", "gloss": ["積み上げる", "石段"]}]}
 {"word": "砌末", "senses": [{"pinyin": "qièmò", "gloss": ["舞台の小道具"]}]}
 {"word": "研", "senses": [{"pinyin": "yán", "gloss": ["すりつぶす", "研究する"]}]}
@@ -3780,7 +3780,7 @@
 {"word": "衣胞", "senses": [{"pinyin": "yībāo", "gloss": ["胎盤", "えな"]}]}
 {"word": "衣补儿", "senses": [], "unsure": true}
 {"word": "衣锦夜行", "senses": [{"pinyin": "yījǐnyèxíng", "gloss": ["功名が知られない"]}]}
-{"word": "衣锦荣归", "senses": [{"pinyin": "yījǐnr645guī", "gloss": ["錦を飾って帰る"]}]}
+{"word": "衣锦荣归", "senses": [{"pinyin": "yījǐnróngguī", "gloss": ["錦を飾って帰る"]}]}
 {"word": "衣锦还乡", "senses": [{"pinyin": "yījǐnhuánxiāng", "gloss": ["故郷に錦を飾る"]}]}
 {"word": "补丁", "senses": [{"pinyin": "bǔding", "gloss": ["継ぎ当て", "パッチ"]}]}
 {"word": "补上", "senses": [{"pinyin": "bǔshàng", "gloss": ["補う", "埋め合わせる"]}]}

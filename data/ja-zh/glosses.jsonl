@@ -1803,7 +1803,7 @@
 {"word": "ルクス", "zh": [{"s": "勒克斯", "pinyin": "lèkèsī"}, {"s": "勒", "pinyin": "lè"}]}
 {"word": "ルックス", "zh": [{"s": "长相", "pinyin": "zhǎngxiàng"}, {"s": "外貌", "pinyin": "wàimào"}]}
 {"word": "ルサンチマン", "zh": [{"s": "怨恨", "pinyin": "yuànhèn"}]}
-{"word": "ルック", "zh": [{"s": "造型", "pinyin": "zàoxíng"}, {"s": "look", "pinyin": "lùkè"}], "unsure": true}
+{"word": "ルック", "zh": [{"s": "造型", "pinyin": "zàoxíng"}, {"s": "look", "pinyin": "look"}], "unsure": true}
 {"word": "ルネサンス", "zh": [{"s": "文艺复兴", "pinyin": "Wényì Fùxīng"}]}
 {"word": "ルビー", "zh": [{"s": "红宝石", "pinyin": "hóngbǎoshí"}]}
 {"word": "ルポ", "zh": [{"s": "报告文学", "pinyin": "bàogào wénxué"}, {"s": "纪实报道", "pinyin": "jìshí bàodào"}]}
@@ -2186,7 +2186,7 @@
 {"word": "以前", "zh": [{"s": "以前", "pinyin": "yǐ qián"}]}
 {"word": "以内", "zh": [{"s": "以内", "pinyin": "yǐ nèi"}]}
 {"word": "以来", "zh": [{"s": "以来", "pinyin": "yǐ lái"}]}
-{"word": "伊達", "zh": [{"s": "讲究打扮", "pinyin": "jiǎng jiu dǎ ban"}, {"s": "virtue 摆样子", "pinyin": "bǎi yàng zi"}], "unsure": true}
+{"word": "伊達", "zh": [{"s": "讲究打扮", "pinyin": "jiǎng jiu dǎ ban"}, {"s": "摆样子", "pinyin": "bǎi yàng zi"}], "unsure": true}
 {"word": "いろは", "zh": [{"s": "基础知识", "pinyin": "jī chǔ zhī shi"}, {"s": "入门", "pinyin": "rù mén"}]}
 {"word": "位置付け", "zh": [{"s": "定位", "pinyin": "dìng wèi"}]}
 {"word": "依然", "zh": [{"s": "依然", "pinyin": "yī rán"}, {"s": "仍然", "pinyin": "réng rán"}]}
@@ -2222,7 +2222,7 @@
 {"word": "意思決定", "zh": [{"s": "决策", "pinyin": "jué cè"}]}
 {"word": "意思表示", "zh": [{"s": "意思表示", "pinyin": "yì si biǎo shì"}, {"s": "表明意愿", "pinyin": "biǎo míng yì yuàn"}]}
 {"word": "意識", "zh": [{"s": "意识", "pinyin": "yì shí"}]}
-{"word": "意匠", "zh": [{"s": "外观设计", "pinyin": "wài guān shè jì"}, {"s": "design 构思", "pinyin": "gòu sī"}]}
+{"word": "意匠", "zh": [{"s": "外观设计", "pinyin": "wài guān shè jì"}, {"s": "构思", "pinyin": "gòu sī"}]}
 {"word": "意図", "zh": [{"s": "意图", "pinyin": "yì tú"}, {"s": "打算", "pinyin": "dǎ suàn"}]}
 {"word": "意図的", "zh": [{"s": "故意的", "pinyin": "gù yì de"}, {"s": "有意的", "pinyin": "yǒu yì de"}]}
 {"word": "意地", "zh": [{"s": "倔强", "pinyin": "jué jiàng"}, {"s": "意气用事", "pinyin": "yì qì yòng shì"}]}
@@ -2399,7 +2399,7 @@
 {"word": "一審", "zh": [{"s": "一审", "pinyin": "yì shěn"}, {"s": "初审", "pinyin": "chū shěn"}]}
 {"word": "一心", "zh": [{"s": "一心", "pinyin": "yì xīn"}, {"s": "专心", "pinyin": "zhuān xīn"}]}
 {"word": "一心に", "zh": [{"s": "一心一意", "pinyin": "yīxīn-yíyì"}, {"s": "专心地", "pinyin": "zhuānxīn de"}]}
-{"word": "一新", "pinyin": null, "zh": [{"s": "焕然一新", "pinyin": "huànrán-yīxīn"}, {"s": "革新", "pinyin": "géxīn"}]}
+{"word": "一新", "zh": [{"s": "焕然一新", "pinyin": "huànrán-yīxīn"}, {"s": "革新", "pinyin": "géxīn"}]}
 {"word": "一身", "zh": [{"s": "全身", "pinyin": "quánshēn"}, {"s": "一身", "pinyin": "yīshēn"}]}
 {"word": "一人で", "zh": [{"s": "一个人", "pinyin": "yí ge rén"}, {"s": "独自", "pinyin": "dúzì"}]}
 {"word": "一人前", "zh": [{"s": "独当一面", "pinyin": "dúdāng-yímiàn"}, {"s": "一份", "pinyin": "yí fèn"}]}
@@ -2500,7 +2500,7 @@
 {"word": "一掃", "zh": [{"s": "一扫而空", "pinyin": "yìsǎo'érkōng"}, {"s": "扫除", "pinyin": "sǎochú"}]}
 {"word": "一息", "zh": [{"s": "一口气", "pinyin": "yìkǒuqì"}, {"s": "喘口气", "pinyin": "chuǎn kǒu qì"}]}
 {"word": "一足", "zh": [{"s": "一双", "pinyin": "yì shuāng"}, {"s": "一步", "pinyin": "yí bù"}]}
-{"word": "一族", "zh": [{"s": "family", "pinyin": ""}], "unsure": true}
+{"word": "一族", "zh": [{"s": "家族", "pinyin": "jiāzú"}], "unsure": true}
 {"word": "一打", "zh": [{"s": "一打", "pinyin": "yì dá"}]}
 {"word": "一体", "zh": [{"s": "到底", "pinyin": "dàodǐ"}, {"s": "一体", "pinyin": "yìtǐ"}]}
 {"word": "一帯", "zh": [{"s": "一带", "pinyin": "yídài"}]}
@@ -2646,7 +2646,7 @@
 {"word": "隠す", "zh": [{"s": "隐藏", "pinyin": "yǐncáng"}, {"s": "藏", "pinyin": "cáng"}]}
 {"word": "隠れる", "zh": [{"s": "躲藏", "pinyin": "duǒcáng"}, {"s": "隐蔽", "pinyin": "yǐnbì"}]}
 {"word": "隠居", "zh": [{"s": "隐居", "pinyin": "yǐnjū"}, {"s": "退休", "pinyin": "tuìxiū"}]}
-{"word": "隠語", "zh": [{"s": "black话", "pinyin": ""}], "unsure": true}
+{"word": "隠語", "zh": [{"s": "黑话", "pinyin": "hēihuà"}], "unsure": true}
 {"word": "隠匿", "zh": [{"s": "隐匿", "pinyin": "yǐnnì"}, {"s": "窝藏", "pinyin": "wōcáng"}]}
 {"word": "隠滅", "zh": [{"s": "销毁", "pinyin": "xiāohuǐ"}, {"s": "湮灭", "pinyin": "yānmiè"}]}
 {"word": "韻", "zh": [{"s": "韵", "pinyin": "yùn"}, {"s": "押韵", "pinyin": "yāyùn"}]}
@@ -2936,7 +2936,7 @@
 {"word": "往復", "zh": [{"s": "往返", "pinyin": "wǎngfǎn"}, {"s": "来回", "pinyin": "láihuí"}]}
 {"word": "往来", "zh": [{"s": "往来", "pinyin": "wǎnglái"}, {"s": "街道", "pinyin": "jiēdào"}]}
 {"word": "応える", "zh": [{"s": "回应", "pinyin": "huíyìng"}, {"s": "响应", "pinyin": "xiǎngyìng"}]}
-{"word": "応じる", "zh": [{"s": "answer→答应", "pinyin": "dāying"}, {"s": "根据", "pinyin": "gēnjù"}]}
+{"word": "応じる", "zh": [{"s": "答应", "pinyin": "dāying"}, {"s": "根据", "pinyin": "gēnjù"}]}
 {"word": "応援", "zh": [{"s": "支持", "pinyin": "zhīchí"}, {"s": "加油", "pinyin": "jiāyóu"}, {"s": "声援", "pinyin": "shēngyuán"}]}
 {"word": "応急", "zh": [{"s": "应急", "pinyin": "yìngjí"}]}
 {"word": "応酬", "zh": [{"s": "应酬", "pinyin": "yìngchou"}, {"s": "回敬", "pinyin": "huíjìng"}]}
@@ -4368,7 +4368,7 @@
 {"word": "なんというか", "zh": [{"s": "怎么说呢", "pinyin": "zěnme shuō ne"}]}
 {"word": "鈍い", "zh": [{"s": "钝", "pinyin": "dùn"}, {"s": "迟钝", "pinyin": "chídùn"}]}
 {"word": "聖人", "zh": [{"s": "圣人", "pinyin": "shèngrén"}]}
-{"word": "甘味", "zh": [{"s": "甜味", "pinyin": "tiánwèi"}, {"s": "甜food", "pinyin": "tiánpǐn"}]}
+{"word": "甘味", "zh": [{"s": "甜味", "pinyin": "tiánwèi"}, {"s": "甜品", "pinyin": "tiánpǐn"}]}
 {"word": "アジア人", "zh": [{"s": "亚洲人", "pinyin": "Yàzhōurén"}]}
 {"word": "利用方法", "zh": [{"s": "使用方法", "pinyin": "shǐyòng fāngfǎ"}, {"s": "用法", "pinyin": "yòngfǎ"}]}
 {"word": "支払い方法", "zh": [{"s": "支付方式", "pinyin": "zhīfù fāngshì"}, {"s": "付款方式", "pinyin": "fùkuǎn fāngshì"}]}
@@ -4800,7 +4800,7 @@
 {"word": "宗", "zh": [{"s": "宗派", "pinyin": "zōngpài"}, {"s": "宗", "pinyin": "zōng"}]}
 {"word": "友", "zh": [{"s": "朋友", "pinyin": "péng you"}, {"s": "友人", "pinyin": "yǒu rén"}]}
 {"word": "洞", "zh": [{"s": "洞", "pinyin": "dòng"}, {"s": "洞穴", "pinyin": "dòng xué"}]}
-{"word": "サイン", "zh": [{"s": "签名", "pinyin": "qiān míng"}, {"s": "signal 信号", "pinyin": "xìn hào"}, {"s": "暗号", "pinyin": "àn hào"}]}
+{"word": "サイン", "zh": [{"s": "签名", "pinyin": "qiān míng"}, {"s": "信号", "pinyin": "xìn hào"}, {"s": "暗号", "pinyin": "àn hào"}]}
 {"word": "断行", "zh": [{"s": "断然实行", "pinyin": "duàn rán shí xíng"}, {"s": "毅然实行", "pinyin": "yì rán shí xíng"}]}
 {"word": "予約注文", "zh": [{"s": "预订", "pinyin": "yù dìng"}, {"s": "预购", "pinyin": "yù gòu"}]}
 {"word": "グラマー", "zh": [{"s": "语法", "pinyin": "yǔ fǎ"}, {"s": "丰满", "pinyin": "fēng mǎn"}]}
@@ -5142,7 +5142,7 @@
 {"word": "アタック", "zh": [{"s": "进攻", "pinyin": "jìngōng"}, {"s": "扣球", "pinyin": "kòuqiú"}]}
 {"word": "アダプター", "zh": [{"s": "适配器", "pinyin": "shìpèiqì"}]}
 {"word": "アダルト", "zh": [{"s": "成人的", "pinyin": "chéngrén de"}]}
-{"word": "アット", "zh": [{"s": "@", "pinyin": "àitè"}], "unsure": true}
+{"word": "アット", "zh": [{"s": "艾特", "pinyin": "àitè"}], "unsure": true}
 {"word": "アッパー", "zh": [{"s": "上勾拳", "pinyin": "shànggōuquán"}, {"s": "鞋面", "pinyin": "xiémiàn"}]}
 {"word": "アップ", "zh": [{"s": "上升", "pinyin": "shàngshēng"}, {"s": "提高", "pinyin": "tígāo"}, {"s": "特写", "pinyin": "tèxiě"}]}
 {"word": "アトピー", "zh": [{"s": "特应性皮炎", "pinyin": "tèyìngxìng píyán"}]}
@@ -6076,7 +6076,7 @@
 {"word": "具体的", "zh": [{"s": "具体的", "pinyin": "jùtǐ de"}]}
 {"word": "愚か", "zh": [{"s": "愚蠢", "pinyin": "yúchǔn"}, {"s": "傻", "pinyin": "shǎ"}]}
 {"word": "愚痴", "zh": [{"s": "牢骚", "pinyin": "láosāo"}, {"s": "抱怨", "pinyin": "bàoyuàn"}]}
-{"word": "愚連隊", "zh": [{"s": "street gang", "pinyin": ""}], "unsure": true}
+{"word": "愚連隊", "zh": [{"s": "流氓团伙", "pinyin": "liúmáng tuánhuǒ"}], "unsure": true}
 {"word": "空き缶", "zh": [{"s": "空罐", "pinyin": "kōngguàn"}, {"s": "易拉罐", "pinyin": "yìlāguàn"}]}
 {"word": "空き地", "zh": [{"s": "空地", "pinyin": "kòngdì"}]}
 {"word": "虚しい", "zh": [{"s": "空虚", "pinyin": "kōngxū"}, {"s": "徒劳", "pinyin": "túláo"}]}
@@ -7065,7 +7065,7 @@
 {"word": "厚紙", "zh": [{"s": "硬纸板", "pinyin": "yìngzhǐbǎn"}, {"s": "厚纸", "pinyin": "hòuzhǐ"}]}
 {"word": "厚生", "zh": [{"s": "福利", "pinyin": "fúlì"}]}
 {"word": "厚生省", "zh": [{"s": "厚生省", "pinyin": "hòushēngshěng"}]}
-{"word": "厚生年金", "zh": [{"s": "厚生年金", "pinyin": "hòushēng niánjīn"}, {"s": "employees年金保险", "pinyin": "gùyuán yǎnglǎo bǎoxiǎn"}]}
+{"word": "厚生年金", "zh": [{"s": "厚生年金", "pinyin": "hòushēng niánjīn"}, {"s": "雇员养老保险", "pinyin": "gùyuán yǎnglǎo bǎoxiǎn"}]}
 {"word": "厚相", "zh": [{"s": "厚生大臣", "pinyin": "hòushēng dàchén"}]}
 {"word": "厚着", "zh": [{"s": "穿得厚", "pinyin": "chuān de hòu"}, {"s": "多穿衣服", "pinyin": "duō chuān yīfu"}]}
 {"word": "厚み", "zh": [{"s": "厚度", "pinyin": "hòudù"}]}
@@ -7183,7 +7183,7 @@
 {"word": "攻防", "zh": [{"s": "攻防", "pinyin": "gōngfáng"}]}
 {"word": "攻略", "zh": [{"s": "攻略", "pinyin": "gōnglüè"}, {"s": "攻克", "pinyin": "gōngkè"}]}
 {"word": "更ける", "zh": [{"s": "夜深", "pinyin": "yè shēn"}, {"s": "深了", "pinyin": "shēn le"}]}
-{"word": "更に", "zh": [{"s": "更加", "pinyin": "gèngjiā"}, {"s": "further", "pinyin": "jìn'ér"}, {"s": "而且", "pinyin": "érqiě"}]}
+{"word": "更に", "zh": [{"s": "更加", "pinyin": "gèngjiā"}, {"s": "进而", "pinyin": "jìn'ér"}, {"s": "而且", "pinyin": "érqiě"}]}
 {"word": "更衣室", "zh": [{"s": "更衣室", "pinyin": "gēngyīshì"}]}
 {"word": "更改", "zh": [{"s": "更改", "pinyin": "gēnggǎi"}, {"s": "续签", "pinyin": "xùqiān"}]}
 {"word": "更新", "zh": [{"s": "更新", "pinyin": "gēngxīn"}, {"s": "续期", "pinyin": "xùqī"}]}
@@ -7567,7 +7567,7 @@
 {"word": "昆虫", "zh": [{"s": "昆虫", "pinyin": "kūnchóng"}]}
 {"word": "根ざす", "zh": [{"s": "扎根", "pinyin": "zhāgēn"}, {"s": "根源于", "pinyin": "gēnyuán yú"}]}
 {"word": "根掘り葉掘り", "zh": [{"s": "刨根问底", "pinyin": "páogēn wèndǐ"}, {"s": "追根究底", "pinyin": "zhuīgēn jiūdǐ"}]}
-{"word": "根回し", "zh": [{"s": "事先疏通", "pinyin": "shìxiān shūtōng"}, {"s": "private 沟通", "pinyin": "gōutōng"}]}
+{"word": "根回し", "zh": [{"s": "事先疏通", "pinyin": "shìxiān shūtōng"}, {"s": "沟通", "pinyin": "gōutōng"}]}
 {"word": "根幹", "zh": [{"s": "根本", "pinyin": "gēnběn"}, {"s": "核心", "pinyin": "héxīn"}]}
 {"word": "根気", "zh": [{"s": "耐性", "pinyin": "nàixìng"}, {"s": "毅力", "pinyin": "yìlì"}]}
 {"word": "根拠", "zh": [{"s": "根据", "pinyin": "gēnjù"}, {"s": "依据", "pinyin": "yījù"}]}
@@ -7894,7 +7894,7 @@
 {"word": "三女", "zh": [{"s": "三女儿", "pinyin": "sān nǚ'ér"}]}
 {"word": "三振", "zh": [{"s": "三振出局", "pinyin": "sānzhèn chūjú"}, {"s": "三击不中", "pinyin": "sān jī bù zhòng"}]}
 {"word": "三人", "zh": [{"s": "三个人", "pinyin": "sān gè rén"}, {"s": "三人", "pinyin": "sān rén"}]}
-{"word": "三選", "zh": [{"s": "третий", "pinyin": ""}], "unsure": true}
+{"word": "三選", "zh": [{"s": "三度当选", "pinyin": "sān dù dāngxuǎn"}], "unsure": true}
 {"word": "三男", "zh": [{"s": "三儿子", "pinyin": "sān érzi"}]}
 {"word": "三日月", "zh": [{"s": "新月", "pinyin": "xīnyuè"}, {"s": "月牙", "pinyin": "yuèyá"}]}
 {"word": "三本", "zh": [{"s": "三根", "pinyin": "sān gēn"}, {"s": "三支", "pinyin": "sān zhī"}]}
@@ -8013,7 +8013,7 @@
 {"word": "仕事", "zh": [{"s": "工作", "pinyin": "gōngzuò"}, {"s": "活儿", "pinyin": "huór"}]}
 {"word": "仕事場", "zh": [{"s": "工作场所", "pinyin": "gōngzuò chǎngsuǒ"}, {"s": "工作间", "pinyin": "gōngzuòjiān"}]}
 {"word": "仕事中", "zh": [{"s": "工作中", "pinyin": "gōngzuò zhōng"}, {"s": "在上班", "pinyin": "zài shàngbān"}]}
-{"word": "仕手", "zh": [{"s": "", "pinyin": ""}], "unsure": true}
+{"word": "仕手", "zh": [], "unsure": true}
 {"word": "仕出し", "zh": [{"s": "外送餐食", "pinyin": "wàisòng cānshí"}, {"s": "送餐", "pinyin": "sòngcān"}]}
 {"word": "仕上がり", "zh": [{"s": "完成度", "pinyin": "wánchéngdù"}, {"s": "成品效果", "pinyin": "chéngpǐn xiàoguǒ"}]}
 {"word": "仕上げる", "zh": [{"s": "完成", "pinyin": "wánchéng"}, {"s": "做完", "pinyin": "zuòwán"}]}
@@ -8108,7 +8108,7 @@
 {"word": "市営", "zh": [{"s": "市营", "pinyin": "shìyíng"}, {"s": "市办", "pinyin": "shìbàn"}]}
 {"word": "市会", "zh": [{"s": "市议会", "pinyin": "shì yìhuì"}]}
 {"word": "市外", "zh": [{"s": "市外", "pinyin": "shìwài"}]}
-{"word": "市街", "zh": [{"s": "市街", "pinyin": "shìjiē"}, {"s": "街market", "pinyin": "jiēshì"}]}
+{"word": "市街", "zh": [{"s": "市街", "pinyin": "shìjiē"}, {"s": "街市", "pinyin": "jiēshì"}]}
 {"word": "市街地", "zh": [{"s": "市区", "pinyin": "shìqū"}, {"s": "城区", "pinyin": "chéngqū"}]}
 {"word": "市議", "zh": [{"s": "市议员", "pinyin": "shì yìyuán"}]}
 {"word": "市況", "zh": [{"s": "行情", "pinyin": "hángqíng"}, {"s": "市况", "pinyin": "shìkuàng"}]}
@@ -8600,7 +8600,7 @@
 {"word": "実地", "zh": [{"s": "实地", "pinyin": "shídì"}]}
 {"word": "実費", "zh": [{"s": "实际费用", "pinyin": "shíjì fèiyòng"}, {"s": "实费", "pinyin": "shífèi"}]}
 {"word": "実務", "zh": [{"s": "实务", "pinyin": "shíwù"}, {"s": "实际业务", "pinyin": "shíjì yèwù"}]}
-{"word": "実名", "zh": [{"s": "real名", "pinyin": "zhēnshí xìngmíng"}, {"s": "实名", "pinyin": "shímíng"}]}
+{"word": "実名", "zh": [{"s": "真实姓名", "pinyin": "zhēnshí xìngmíng"}, {"s": "实名", "pinyin": "shímíng"}]}
 {"word": "実用", "zh": [{"s": "实用", "pinyin": "shíyòng"}]}
 {"word": "実用的", "zh": [{"s": "实用的", "pinyin": "shíyòng de"}]}
 {"word": "実利", "zh": [{"s": "实利", "pinyin": "shílì"}, {"s": "实际利益", "pinyin": "shíjì lìyì"}]}
@@ -9309,7 +9309,7 @@
 {"word": "重大", "zh": [{"s": "重大", "pinyin": "zhòngdà"}, {"s": "严重", "pinyin": "yánzhòng"}]}
 {"word": "重鎮", "zh": [{"s": "重镇", "pinyin": "zhòngzhèn"}, {"s": "权威人物", "pinyin": "quánwēi rénwù"}]}
 {"word": "重点", "zh": [{"s": "重点", "pinyin": "zhòngdiǎn"}]}
-{"word": "重箱", "zh": [{"s": "多层food盒", "pinyin": ""}], "unsure": true}
+{"word": "重箱", "zh": [{"s": "多层食盒", "pinyin": "duōcéng shíhé"}], "unsure": true}
 {"word": "重病", "zh": [{"s": "重病", "pinyin": "zhòngbìng"}]}
 {"word": "重役", "zh": [{"s": "董事", "pinyin": "dǒngshì"}, {"s": "高层管理人员", "pinyin": "gāocéng guǎnlǐ rényuán"}]}
 {"word": "重油", "zh": [{"s": "重油", "pinyin": "zhòngyóu"}]}
@@ -9437,7 +9437,7 @@
 {"word": "春夏秋冬", "zh": [{"s": "春夏秋冬", "pinyin": "chūn xià qiū dōng"}, {"s": "四季", "pinyin": "sìjì"}]}
 {"word": "春休み", "zh": [{"s": "春假", "pinyin": "chūnjià"}]}
 {"word": "春秋", "zh": [{"s": "春秋", "pinyin": "chūnqiū"}, {"s": "岁月", "pinyin": "suìyuè"}]}
-{"word": "春先", "zh": [{"s": "初春", "pinyin": "chūchūn"}, {"s": "early春", "pinyin": ""}], "unsure": true}
+{"word": "春先", "zh": [{"s": "初春", "pinyin": "chūchūn"}, {"s": "早春", "pinyin": "zǎochūn"}], "unsure": true}
 {"word": "春闘", "zh": [{"s": "春季劳资谈判", "pinyin": "chūnjì láozī tánpàn"}]}
 {"word": "春分", "zh": [{"s": "春分", "pinyin": "chūnfēn"}]}
 {"word": "瞬間", "zh": [{"s": "瞬间", "pinyin": "shùnjiān"}, {"s": "刹那", "pinyin": "chànà"}]}
@@ -9502,7 +9502,7 @@
 {"word": "初詣", "zh": [{"s": "新年首次参拜", "pinyin": "xīnnián shǒucì cānbài"}]}
 {"word": "初出", "zh": [{"s": "首次出现", "pinyin": "shǒucì chūxiàn"}, {"s": "初次发表", "pinyin": "chūcì fābiǎo"}]}
 {"word": "初旬", "zh": [{"s": "上旬", "pinyin": "shàngxún"}]}
-{"word": "初場所", "zh": [{"s": "新年场所", "pinyin": ""}], "unsure": true}
+{"word": "初場所", "zh": [{"s": "新年场所", "pinyin": "xīnnián chǎngsuǒ"}], "unsure": true}
 {"word": "初心", "zh": [{"s": "初心", "pinyin": "chūxīn"}, {"s": "初衷", "pinyin": "chūzhōng"}]}
 {"word": "初心者", "zh": [{"s": "初学者", "pinyin": "chūxuézhě"}, {"s": "新手", "pinyin": "xīnshǒu"}]}
 {"word": "初雪", "zh": [{"s": "初雪", "pinyin": "chūxuě"}]}
@@ -11387,7 +11387,7 @@
 {"word": "相談", "zh": [{"s": "商量", "pinyin": "shāngliang"}, {"s": "咨询", "pinyin": "zīxún"}]}
 {"word": "相槌", "zh": [{"s": "附和", "pinyin": "fùhè"}, {"s": "随声应答", "pinyin": "suíshēng yìngdá"}]}
 {"word": "相当", "zh": [{"s": "相当", "pinyin": "xiāngdāng"}, {"s": "相应", "pinyin": "xiāngyìng"}]}
-{"word": "相変わらず", "zh": [{"s": "照旧", "pinyin": "zhàojiù"}, {"s": "still 一如既往", "pinyin": "yīrú jìwǎng"}]}
+{"word": "相変わらず", "zh": [{"s": "照旧", "pinyin": "zhàojiù"}, {"s": "一如既往", "pinyin": "yīrú jìwǎng"}]}
 {"word": "相棒", "zh": [{"s": "搭档", "pinyin": "dādàng"}, {"s": "伙伴", "pinyin": "huǒbàn"}]}
 {"word": "相撲", "zh": [{"s": "相扑", "pinyin": "xiàngpū"}]}
 {"word": "相撲取り", "zh": [{"s": "相扑力士", "pinyin": "xiàngpū lìshì"}]}
@@ -12558,7 +12558,7 @@
 {"word": "通達", "zh": [{"s": "通知", "pinyin": "tōngzhī"}, {"s": "通告", "pinyin": "tōnggào"}]}
 {"word": "通知", "zh": [{"s": "通知", "pinyin": "tōngzhī"}]}
 {"word": "通帳", "zh": [{"s": "存折", "pinyin": "cúnzhé"}]}
-{"word": "通念", "zh": [{"s": "общ", "pinyin": "tōngniàn"}], "unsure": true}
+{"word": "通念", "zh": [{"s": "普遍观念", "pinyin": "pǔbiàn guānniàn"}], "unsure": true}
 {"word": "通報", "zh": [{"s": "报告", "pinyin": "bàogào"}, {"s": "举报", "pinyin": "jǔbào"}]}
 {"word": "通夜", "zh": [{"s": "守灵", "pinyin": "shǒulíng"}]}
 {"word": "通訳", "zh": [{"s": "口译", "pinyin": "kǒuyì"}, {"s": "翻译", "pinyin": "fānyì"}]}
@@ -19502,7 +19502,7 @@
 {"word": "スローガン", "zh": [{"s": "口号", "pinyin": "kǒuhào"}, {"s": "标语", "pinyin": "biāoyǔ"}]}
 {"word": "覚醒", "zh": [{"s": "觉醒", "pinyin": "juéxǐng"}, {"s": "苏醒", "pinyin": "sūxǐng"}]}
 {"word": "勘案", "zh": [{"s": "斟酌", "pinyin": "zhēnzhuó"}, {"s": "考虑", "pinyin": "kǎolǜ"}]}
-{"word": "留任", "zh": [{"s": "留任", "pinyin": "liúrèn"}, {"s": "continue", "pinyin": "liúrèn"}]}
+{"word": "留任", "zh": [{"s": "留任", "pinyin": "liúrèn"}]}
 {"word": "際会", "zh": [{"s": "遭遇", "pinyin": "zāoyù"}, {"s": "碰上", "pinyin": "pèngshang"}]}
 {"word": "生還", "zh": [{"s": "生还", "pinyin": "shēnghuán"}, {"s": "生还得救", "pinyin": "shēnghuán déjiù"}]}
 {"word": "施工", "zh": [{"s": "施工", "pinyin": "shīgōng"}]}
@@ -19689,7 +19689,7 @@
 {"word": "護国", "zh": [{"s": "护国", "pinyin": "hùguó"}]}
 {"word": "交じり", "zh": [{"s": "混杂", "pinyin": "hùnzá"}, {"s": "夹杂", "pinyin": "jiāzá"}]}
 {"word": "公共放送", "zh": [{"s": "公共广播", "pinyin": "gōnggòng guǎngbō"}]}
-{"word": "公式戦", "zh": [{"s": "正式比赛", "pinyin": "zhèngshì bǐsài"}, {"s": "official", "pinyin": "zhèngshì sài"}]}
+{"word": "公式戦", "zh": [{"s": "正式比赛", "pinyin": "zhèngshì bǐsài"}, {"s": "正式赛", "pinyin": "zhèngshì sài"}]}
 {"word": "公舎", "zh": [{"s": "公务住宅", "pinyin": "gōngwù zhùzhái"}, {"s": "官邸", "pinyin": "guāndǐ"}]}
 {"word": "公定歩合", "zh": [{"s": "官方贴现率", "pinyin": "guānfāng tiēxiànlǜ"}, {"s": "基准利率", "pinyin": "jīzhǔn lìlǜ"}]}
 {"word": "口頭弁論", "zh": [{"s": "口头辩论", "pinyin": "kǒutóu biànlùn"}, {"s": "庭审辩论", "pinyin": "tíngshěn biànlùn"}]}
@@ -20559,7 +20559,7 @@
 {"word": "デッサン", "zh": [{"s": "素描", "pinyin": "sùmiáo"}]}
 {"word": "デッド", "zh": [{"s": "死的", "pinyin": "sǐ de"}, {"s": "无效", "pinyin": "wúxiào"}]}
 {"word": "デッドヒート", "zh": [{"s": "激烈角逐", "pinyin": "jīliè juézhú"}]}
-{"word": "デニール", "zh": [{"s": "旦尼尔", "pinyin": "dànníěr"}, {"s": "denier", "pinyin": "dān"}]}
+{"word": "デニール", "zh": [{"s": "旦尼尔", "pinyin": "dànníěr"}, {"s": "旦", "pinyin": "dān"}]}
 {"word": "デニム", "zh": [{"s": "牛仔布", "pinyin": "niúzǎibù"}]}
 {"word": "デノミ", "zh": [{"s": "货币面额变更", "pinyin": "huòbì miàn'é biàngēng"}]}
 {"word": "デバイス", "zh": [{"s": "设备", "pinyin": "shèbèi"}, {"s": "器件", "pinyin": "qìjiàn"}]}
@@ -20603,7 +20603,7 @@
 {"word": "トップクラス", "zh": [{"s": "顶级", "pinyin": "dǐngjí"}, {"s": "一流", "pinyin": "yīliú"}]}
 {"word": "トップスター", "zh": [{"s": "顶级明星", "pinyin": "dǐngjí míngxīng"}]}
 {"word": "トップニュース", "zh": [{"s": "头条新闻", "pinyin": "tóutiáo xīnwén"}]}
-{"word": "トップバッター", "zh": [{"s": "первый", "pinyin": "dǎtóupào"}, {"s": "首位打者", "pinyin": "shǒuwèi dǎzhě"}]}
+{"word": "トップバッター", "zh": [{"s": "打头炮", "pinyin": "dǎtóupào"}, {"s": "首位打者", "pinyin": "shǒuwèi dǎzhě"}]}
 {"word": "トップレス", "zh": [{"s": "上空", "pinyin": "shàngkōng"}, {"s": "裸露上身", "pinyin": "luǒlù shàngshēn"}]}
 {"word": "トトカルチョ", "zh": [{"s": "足球博彩", "pinyin": "zúqiú bócǎi"}]}
 {"word": "トピック", "zh": [{"s": "话题", "pinyin": "huàtí"}, {"s": "主题", "pinyin": "zhǔtí"}]}
@@ -20866,7 +20866,7 @@
 {"word": "町役場", "zh": [{"s": "镇政府", "pinyin": "zhènzhèngfǔ"}, {"s": "町役所", "pinyin": "tǐngyìsuǒ"}]}
 {"word": "町議会", "zh": [{"s": "镇议会", "pinyin": "zhèn yìhuì"}]}
 {"word": "定率", "zh": [{"s": "定率", "pinyin": "dìnglǜ"}, {"s": "固定比率", "pinyin": "gùdìng bǐlǜ"}]}
-{"word": "定期的", "zh": [{"s": "定期的", "pinyin": "dìngqī de"}, {"s": "periodic 定期", "pinyin": "dìngqī"}]}
+{"word": "定期的", "zh": [{"s": "定期的", "pinyin": "dìngqī de"}, {"s": "定期", "pinyin": "dìngqī"}]}
 {"word": "定期預金", "zh": [{"s": "定期存款", "pinyin": "dìngqī cúnkuǎn"}]}
 {"word": "積み重ね", "zh": [{"s": "积累", "pinyin": "jīlěi"}, {"s": "堆积", "pinyin": "duījī"}]}
 {"word": "積ん読", "zh": [{"s": "买书不读", "pinyin": "mǎishū bù dú"}, {"s": "囤书", "pinyin": "túnshū"}]}
@@ -21647,7 +21647,7 @@
 {"word": "ビクトリア", "zh": [{"s": "维多利亚", "pinyin": "Wéiduōlìyà"}]}
 {"word": "ビザ", "zh": [{"s": "签证", "pinyin": "qiānzhèng"}]}
 {"word": "ビジター", "zh": [{"s": "访客", "pinyin": "fǎngkè"}, {"s": "客队", "pinyin": "kèduì"}]}
-{"word": "ビジネス", "zh": [{"s": "商务", "pinyin": "shāngwù"}, {"s": "business", "pinyin": "shēngyi"}, {"s": "生意", "pinyin": "shēngyi"}]}
+{"word": "ビジネス", "zh": [{"s": "商务", "pinyin": "shāngwù"}, {"s": "生意", "pinyin": "shēngyi"}]}
 {"word": "ビジネスマン", "zh": [{"s": "商务人士", "pinyin": "shāngwù rénshì"}, {"s": "商人", "pinyin": "shāngrén"}]}
 {"word": "ビジネスライク", "zh": [{"s": "公事公办的", "pinyin": "gōngshì-gōngbàn de"}]}
 {"word": "ビジュアル", "zh": [{"s": "视觉的", "pinyin": "shìjué de"}, {"s": "视觉效果", "pinyin": "shìjué xiàoguǒ"}]}
@@ -22761,7 +22761,7 @@
 {"word": "間に合せ", "zh": [{"s": "临时凑合", "pinyin": "línshí còuhe"}, {"s": "权宜之计", "pinyin": "quányí zhī jì"}]}
 {"word": "澱む", "zh": [{"s": "淤积", "pinyin": "yūjī"}, {"s": "停滞", "pinyin": "tíngzhì"}]}
 {"word": "にも拘らず", "zh": [{"s": "尽管", "pinyin": "jǐnguǎn"}, {"s": "虽然…但是", "pinyin": "suīrán…dànshì"}]}
-{"word": "巻添え", "zh": [{"s": "connected", "pinyin": "x"}], "unsure": true}
+{"word": "巻添え", "zh": [{"s": "连累", "pinyin": "liánlěi"}], "unsure": true}
 {"word": "ショベル", "zh": [{"s": "铁锹", "pinyin": "tiěqiāo"}, {"s": "挖掘机", "pinyin": "wājuéjī"}]}
 {"word": "ステイタス", "zh": [{"s": "地位", "pinyin": "dìwèi"}, {"s": "状态", "pinyin": "zhuàngtài"}]}
 {"word": "スパゲッティ", "zh": [{"s": "意大利面", "pinyin": "Yìdàlìmiàn"}, {"s": "意面", "pinyin": "yìmiàn"}]}
@@ -22795,7 +22795,7 @@
 {"word": "絵とき", "zh": [{"s": "图解", "pinyin": "tújiě"}, {"s": "看图说明", "pinyin": "kàntú shuōmíng"}]}
 {"word": "にこにこ", "zh": [{"s": "笑眯眯", "pinyin": "xiàomīmī"}, {"s": "笑呵呵", "pinyin": "xiàohēhē"}]}
 {"word": "ハロウィーン", "zh": [{"s": "万圣节", "pinyin": "Wànshèngjié"}]}
-{"word": "バーレル", "zh": [{"s": "桶", "pinyin": "tǒng"}, {"s": "barrel（容量単位）", "pinyin": "tǒng"}]}
+{"word": "バーレル", "zh": [{"s": "桶", "pinyin": "tǒng"}]}
 {"word": "ヴァイオリン", "zh": [{"s": "小提琴", "pinyin": "xiǎotíqín"}]}
 {"word": "バザール", "zh": [{"s": "集市", "pinyin": "jíshì"}, {"s": "义卖会", "pinyin": "yìmàihuì"}]}
 {"word": "パーティ", "zh": [{"s": "聚会", "pinyin": "jùhuì"}, {"s": "派对", "pinyin": "pàiduì"}]}
@@ -23348,7 +23348,7 @@
 {"word": "ローヤル", "zh": [{"s": "皇家", "pinyin": "huángjiā"}, {"s": "王室的", "pinyin": "wángshì de"}]}
 {"word": "ロイヤルティ", "zh": [{"s": "版税", "pinyin": "bǎnshuì"}, {"s": "忠诚度", "pinyin": "zhōngchéngdù"}]}
 {"word": "ロサンジェルス", "zh": [{"s": "洛杉矶", "pinyin": "Luòshānjī"}]}
-{"word": "浪漫", "zh": [{"s": "浪漫", "pinyin": "làngmàn"}, {"s": "романти…", "pinyin": "làngmàn qíngdiào"}], "unsure": true}
+{"word": "浪漫", "zh": [{"s": "浪漫", "pinyin": "làngmàn"}, {"s": "浪漫情调", "pinyin": "làngmàn qíngdiào"}], "unsure": true}
 {"word": "ローマンス", "zh": [{"s": "恋情", "pinyin": "liànqíng"}, {"s": "浪漫史", "pinyin": "làngmànshǐ"}]}
 {"word": "ワイヤー", "zh": [{"s": "钢丝", "pinyin": "gāngsī"}, {"s": "电线", "pinyin": "diànxiàn"}]}
 {"word": "ウォラント", "zh": [{"s": "认股权证", "pinyin": "rèngǔ quánzhèng"}]}
@@ -24962,7 +24962,7 @@
 {"word": "浮彫り", "zh": [{"s": "浮雕", "pinyin": "fúdiāo"}]}
 {"word": "受持ち", "zh": [{"s": "负责", "pinyin": "fùzé"}, {"s": "担任", "pinyin": "dānrèn"}]}
 {"word": "受渡し", "zh": [{"s": "交接", "pinyin": "jiāojiē"}, {"s": "交割", "pinyin": "jiāogē"}]}
-{"word": "歌合わせ", "zh": [{"s": "和歌比赛", "pinyin": "héɡē bǐsài"}]}
+{"word": "歌合わせ", "zh": [{"s": "和歌比赛", "pinyin": "hégē bǐsài"}]}
 {"word": "唄う", "zh": [{"s": "唱", "pinyin": "chàng"}, {"s": "歌唱", "pinyin": "gēchàng"}]}
 {"word": "打明ける", "zh": [{"s": "坦白", "pinyin": "tǎnbái"}, {"s": "倾诉", "pinyin": "qīngsù"}]}
 {"word": "打ち合せる", "zh": [{"s": "商量", "pinyin": "shāngliang"}, {"s": "洽谈", "pinyin": "qiàtán"}]}
@@ -28238,7 +28238,7 @@
 {"word": "ポップフライ", "zh": [{"s": "内野高飞球", "pinyin": "nèiyě gāofēiqiú"}]}
 {"word": "ポテトチップ", "zh": [{"s": "薯片", "pinyin": "shǔpiàn"}, {"s": "土豆片", "pinyin": "tǔdòupiàn"}]}
 {"word": "ポテトフライ", "zh": [{"s": "炸薯条", "pinyin": "zháshǔtiáo"}, {"s": "薯条", "pinyin": "shǔtiáo"}]}
-{"word": "ポテンツ", "zh": [{"s": "性能力", "pinyin": "xìngnénglì"}, {"s": "potency", "pinyin": "potency"}], "unsure": true}
+{"word": "ポテンツ", "zh": [{"s": "性能力", "pinyin": "xìngnénglì"}], "unsure": true}
 {"word": "ポピー", "zh": [{"s": "罂粟", "pinyin": "yīngsù"}, {"s": "虞美人", "pinyin": "yúměirén"}]}
 {"word": "ポピュラリティー", "zh": [{"s": "人气", "pinyin": "rénqì"}, {"s": "普及", "pinyin": "pǔjí"}]}
 {"word": "ポピュリズム", "zh": [{"s": "民粹主义", "pinyin": "míncuì zhǔyì"}]}
@@ -30088,7 +30088,7 @@
 {"word": "チュートン", "zh": [{"s": "条顿", "pinyin": "Tiáodùn"}]}
 {"word": "チュール", "zh": [{"s": "薄纱", "pinyin": "báoshā"}, {"s": "网纱", "pinyin": "wǎngshā"}]}
 {"word": "チュニックコート", "zh": [{"s": "束腰长外套", "pinyin": "shùyāo cháng wàitào"}]}
-{"word": "チョーカー", "zh": [{"s": "颈链", "pinyin": "jǐngliàn"}, {"s": "choker项圈", "pinyin": "xiàngquān"}]}
+{"word": "チョーカー", "zh": [{"s": "颈链", "pinyin": "jǐngliàn"}, {"s": "项圈", "pinyin": "xiàngquān"}]}
 {"word": "チリソース", "zh": [{"s": "辣椒酱", "pinyin": "làjiāojiàng"}, {"s": "甜辣酱", "pinyin": "tiánlàjiàng"}]}
 {"word": "チルド", "zh": [{"s": "冷藏", "pinyin": "lěngcáng"}, {"s": "冰温", "pinyin": "bīngwēn"}]}
 {"word": "チロリアンハット", "zh": [{"s": "蒂罗尔帽", "pinyin": "Dìluó'ěrmào"}]}
@@ -30170,7 +30170,7 @@
 {"word": "共形", "zh": [{"s": "共形", "pinyin": "gòngxíng"}, {"s": "保角", "pinyin": "bǎojiǎo"}]}
 {"word": "共形場理論", "zh": [{"s": "共形场论", "pinyin": "gòngxíng chǎnglùn"}]}
 {"word": "超対称理論", "zh": [{"s": "超对称理论", "pinyin": "chāoduìchèn lǐlùn"}]}
-{"word": "宇宙像", "zh": [{"s": "宇宙图景", "pinyin": "yǔzhòu тújǐng"}]}
+{"word": "宇宙像", "zh": [{"s": "宇宙图景", "pinyin": "yǔzhòu tújǐng"}]}
 {"word": "一般相対論", "zh": [{"s": "广义相对论", "pinyin": "guǎngyì xiāngduìlùn"}]}
 {"word": "格子ゲージ理論", "zh": [{"s": "格点规范理论", "pinyin": "gédiǎn guīfàn lǐlùn"}]}
 {"word": "非摂動", "zh": [{"s": "非微扰", "pinyin": "fēi wēirǎo"}]}
@@ -30421,7 +30421,7 @@
 {"word": "帯グラフ", "zh": [{"s": "条形百分比图", "pinyin": "tiáoxíng bǎifēnbǐtú"}, {"s": "带状图", "pinyin": "dàizhuàngtú"}]}
 {"word": "帯ドラマ", "zh": [{"s": "日播剧", "pinyin": "rìbōjù"}, {"s": "每日连续剧", "pinyin": "měirì liánxùjù"}]}
 {"word": "負ぶう", "zh": [{"s": "背", "pinyin": "bēi"}, {"s": "背负", "pinyin": "bēifù"}]}
-{"word": "おほん", "zh": [{"s": "咳咳", "pinyin": "kékе"}, {"s": "嗯哼", "pinyin": "ńhēng"}]}
+{"word": "おほん", "zh": [{"s": "咳咳", "pinyin": "kéke"}, {"s": "嗯哼", "pinyin": "ńhēng"}]}
 {"word": "溺れ死に", "zh": [{"s": "淹死", "pinyin": "yānsǐ"}, {"s": "溺死", "pinyin": "nìsǐ"}]}
 {"word": "お水取り", "zh": [{"s": "取水仪式", "pinyin": "qǔshuǐ yíshì"}]}
 {"word": "お眼鏡", "zh": [{"s": "赏识", "pinyin": "shǎngshí"}, {"s": "眼光", "pinyin": "yǎnguāng"}]}
@@ -30629,7 +30629,7 @@
 {"word": "虫取り", "zh": [{"s": "捉虫", "pinyin": "zhuō chóng"}, {"s": "捕虫", "pinyin": "bǔ chóng"}]}
 {"word": "チョココロネ", "zh": [{"s": "巧克力螺卷面包", "pinyin": "qiǎokèlì luójuǎn miànbāo"}]}
 {"word": "庇い立て", "zh": [{"s": "包庇", "pinyin": "bāobì"}, {"s": "袒护", "pinyin": "tǎnhù"}]}
-{"word": "平社員", "zh": [{"s": "普通职员", "pinyin": "pǔtōng zhíyuán"}, {"s": "basic员工", "pinyin": "jīcéng yuángōng"}]}
+{"word": "平社員", "zh": [{"s": "普通职员", "pinyin": "pǔtōng zhíyuán"}, {"s": "基层员工", "pinyin": "jīcéng yuángōng"}]}
 {"word": "特攻服", "zh": [{"s": "特攻服", "pinyin": "tègōng fú"}], "unsure": true}
 {"word": "料理長", "zh": [{"s": "厨师长", "pinyin": "chúshīzhǎng"}, {"s": "主厨", "pinyin": "zhǔchú"}]}
 {"word": "長じる", "zh": [{"s": "长大", "pinyin": "zhǎngdà"}, {"s": "擅长", "pinyin": "shàncháng"}]}
@@ -32288,7 +32288,7 @@
 {"word": "ギーギー", "zh": [{"s": "吱吱", "pinyin": "zhīzhī"}]}
 {"word": "モダン焼き", "zh": [{"s": "摩登烧", "pinyin": "módēng shāo"}], "unsure": true}
 {"word": "いとこ違い", "zh": [{"s": "堂表叔侄辈", "pinyin": "tángbiǎo shūzhí bèi"}], "unsure": true}
-{"word": "鳥餌", "zh": [{"s": "鸟food", "pinyin": "niǎoshí"}], "unsure": true}
+{"word": "鳥餌", "zh": [{"s": "鸟食", "pinyin": "niǎoshí"}], "unsure": true}
 {"word": "心に留める", "zh": [{"s": "记在心上", "pinyin": "jì zài xīn shàng"}, {"s": "留心", "pinyin": "liúxīn"}]}
 {"word": "韓流", "zh": [{"s": "韩流", "pinyin": "Hánliú"}]}
 {"word": "合成加速度", "zh": [{"s": "合成加速度", "pinyin": "héchéng jiāsùdù"}]}
@@ -32620,7 +32620,7 @@
 {"word": "諧謔を弄する", "zh": [{"s": "戏谑", "pinyin": "xìxuè"}, {"s": "说俏皮话", "pinyin": "shuō qiàopihuà"}]}
 {"word": "顔を売る", "zh": [{"s": "抛头露面博名气", "pinyin": "pāotóu-lòumiàn bó míngqì"}, {"s": "扩大知名度", "pinyin": "kuòdà zhīmíngdù"}]}
 {"word": "顔を貸す", "zh": [{"s": "赏脸出面", "pinyin": "shǎngliǎn chūmiàn"}, {"s": "出面帮忙", "pinyin": "chūmiàn bāngmáng"}]}
-{"word": "顔を利かす", "zh": [{"s": "仗着面子办事", "pinyin": "zhàngzhe miànzi bànshì"}, {"s": "有influence", "pinyin": "yǒu miànzi"}]}
+{"word": "顔を利かす", "zh": [{"s": "仗着面子办事", "pinyin": "zhàngzhe miànzi bànshì"}, {"s": "有面子", "pinyin": "yǒu miànzi"}]}
 {"word": "顔を突き合わせる", "zh": [{"s": "面对面", "pinyin": "miànduìmiàn"}, {"s": "促膝相对", "pinyin": "cùxī xiāngduì"}]}
 {"word": "顔をつなぐ", "zh": [{"s": "维系人脉", "pinyin": "wéixì rénmài"}, {"s": "保持交往", "pinyin": "bǎochí jiāowǎng"}]}
 {"word": "顔を直す", "zh": [{"s": "补妆", "pinyin": "bǔzhuāng"}]}
@@ -32965,7 +32965,7 @@
 {"word": "ほじくり出す", "zh": [{"s": "抠出来", "pinyin": "kōu chūlái"}, {"s": "挖出", "pinyin": "wāchū"}]}
 {"word": "イラマチオ", "zh": [{"s": "深喉", "pinyin": "shēnhóu"}]}
 {"word": "穂木", "zh": [{"s": "接穗", "pinyin": "jiēsuì"}]}
-{"word": "アレフ", "zh": [{"s": "阿leph", "pinyin": "ā"}, {"s": "阿列夫", "pinyin": "ālièfū"}]}
+{"word": "アレフ", "zh": [{"s": "阿列夫", "pinyin": "ālièfū"}]}
 {"word": "超限帰納法", "zh": [{"s": "超限归纳法", "pinyin": "chāoxiàn guīnàfǎ"}]}
 {"word": "超限数", "zh": [{"s": "超限数", "pinyin": "chāoxiànshù"}]}
 {"word": "超限", "zh": [{"s": "超限", "pinyin": "chāoxiàn"}]}
@@ -33496,7 +33496,7 @@
 {"word": "字引学問", "zh": [{"s": "死记字典的学问", "pinyin": "sǐjì zìdiǎn de xuéwèn"}], "unsure": true}
 {"word": "杓子果報", "zh": [], "unsure": true}
 {"word": "リハ", "zh": [{"s": "彩排", "pinyin": "cǎipái"}, {"s": "康复训练", "pinyin": "kāngfù xùnliàn"}]}
-{"word": "マルカート", "zh": [{"s": "marcato", "pinyin": "mǎ'ěrkǎtuō"}, {"s": "强音记号", "pinyin": "qiángyīn jìhào"}], "unsure": true}
+{"word": "マルカート", "zh": [{"s": "marcato", "pinyin": "marcato"}, {"s": "强音记号", "pinyin": "qiángyīn jìhào"}], "unsure": true}
 {"word": "蛇心仏口", "zh": [{"s": "佛口蛇心", "pinyin": "fó kǒu shé xīn"}]}
 {"word": "朱唇皓歯", "zh": [{"s": "朱唇皓齿", "pinyin": "zhū chún hào chǐ"}]}
 {"word": "春花秋月", "zh": [{"s": "春花秋月", "pinyin": "chūn huā qiū yuè"}]}
@@ -33863,7 +33863,7 @@
 {"word": "目に一丁字もない", "zh": [{"s": "目不识丁", "pinyin": "mùbùshídīng"}]}
 {"word": "目に一丁字なし", "zh": [{"s": "目不识丁", "pinyin": "mùbùshídīng"}]}
 {"word": "安牌", "zh": [{"s": "安全牌", "pinyin": "ānquánpái"}]}
-{"word": "入格", "zh": [{"s": "入格", "pinyin": "rùgé"}, {"s": "illative格", "pinyin": "illative gé"}]}
+{"word": "入格", "zh": [{"s": "入格", "pinyin": "rùgé"}]}
 {"word": "分格", "zh": [{"s": "部分格", "pinyin": "bùfen gé"}]}
 {"word": "様格", "zh": [{"s": "样格", "pinyin": "yàng gé"}], "unsure": true}
 {"word": "内格", "zh": [{"s": "内格", "pinyin": "nèi gé"}, {"s": "内位格", "pinyin": "nèiwèi gé"}]}
@@ -33892,7 +33892,7 @@
 {"word": "漉く", "zh": [{"s": "抄纸", "pinyin": "chāozhǐ"}, {"s": "捞纸", "pinyin": "lāozhǐ"}]}
 {"word": "ガン見", "zh": [{"s": "死盯", "pinyin": "sǐdīng"}, {"s": "直勾勾地看", "pinyin": "zhígōugōu de kàn"}]}
 {"word": "チラ見", "zh": [{"s": "瞟一眼", "pinyin": "piǎo yī yǎn"}, {"s": "瞄一眼", "pinyin": "miáo yī yǎn"}]}
-{"word": "チラ見せ", "zh": [{"s": "若隐若现地показ", "pinyin": "ruòyǐn ruòxiàn"}, {"s": "小露一下", "pinyin": "xiǎo lù yīxià"}]}
+{"word": "チラ見せ", "zh": [{"s": "若隐若现", "pinyin": "ruòyǐn ruòxiàn"}, {"s": "小露一下", "pinyin": "xiǎo lù yīxià"}]}
 {"word": "スタバる", "zh": [], "unsure": true}
 {"word": "カフェる", "zh": [], "unsure": true}
 {"word": "ケンチキ", "zh": [{"s": "肯德基", "pinyin": "kěndéjī"}]}
@@ -34896,7 +34896,7 @@
 {"word": "即死亡", "zh": [{"s": "当场死亡", "pinyin": "dāngchǎng sǐwáng"}, {"s": "立即死亡", "pinyin": "lìjí sǐwáng"}]}
 {"word": "腸詰め菌", "zh": [{"s": "肉毒杆菌", "pinyin": "ròudú gǎnjūn"}]}
 {"word": "健康人", "zh": [{"s": "健康人", "pinyin": "jiànkāngrén"}, {"s": "健康者", "pinyin": "jiànkāngzhě"}]}
-{"word": "精進落とし", "zh": [{"s": "葬礼后的宴席", "pinyin": "zànglǐ hòu de yànxí"}], "unsure": false}
+{"word": "精進落とし", "zh": [{"s": "葬礼后的宴席", "pinyin": "zànglǐ hòu de yànxí"}]}
 {"word": "バスオイル", "zh": [{"s": "沐浴油", "pinyin": "mùyù yóu"}, {"s": "浴油", "pinyin": "yùyóu"}]}
 {"word": "老人施設", "zh": [{"s": "养老机构", "pinyin": "yǎnglǎo jīgòu"}, {"s": "养老院", "pinyin": "yǎnglǎoyuàn"}]}
 {"word": "保存食品", "zh": [{"s": "保存食品", "pinyin": "bǎocún shípǐn"}, {"s": "腌制食品", "pinyin": "yānzhì shípǐn"}]}
@@ -35908,7 +35908,7 @@
 {"word": "お作り", "zh": [{"s": "生鱼片", "pinyin": "shēngyúpiàn"}]}
 {"word": "座学", "zh": [{"s": "课堂学习", "pinyin": "kètáng xuéxí"}, {"s": "理论课", "pinyin": "lǐlùnkè"}]}
 {"word": "椀盛り", "zh": [], "unsure": true}
-{"word": "お重", "zh": [{"s": "多层food盒", "pinyin": ""}], "unsure": true}
+{"word": "お重", "zh": [{"s": "多层食盒", "pinyin": "duōcéng shíhé"}], "unsure": true}
 {"word": "おととい来やがれ", "zh": [{"s": "滚一边去", "pinyin": "gǔn yībiān qù"}, {"s": "再也别来了", "pinyin": "zài yě bié lái le"}]}
 {"word": "完食", "zh": [{"s": "吃光", "pinyin": "chīguāng"}, {"s": "全部吃完", "pinyin": "quánbù chīwán"}]}
 {"word": "完飲", "zh": [{"s": "喝光", "pinyin": "hēguāng"}]}
@@ -36039,7 +36039,7 @@
 {"word": "スパー", "zh": [{"s": "对练", "pinyin": "duìliàn"}, {"s": "陪练", "pinyin": "péiliàn"}]}
 {"word": "マテバラ", "zh": [], "unsure": true}
 {"word": "在職証明書", "zh": [{"s": "在职证明", "pinyin": "zàizhí zhèngmíng"}]}
-{"word": "雇用証明書", "zh": [{"s": "雇佣证明", "pinyin": "gùyōng zhèngmíng"}, {"s": "employment证明", "pinyin": "gùyòng zhèngmíngshū"}]}
+{"word": "雇用証明書", "zh": [{"s": "雇佣证明", "pinyin": "gùyōng zhèngmíng"}, {"s": "雇佣证明书", "pinyin": "gùyòng zhèngmíngshū"}]}
 {"word": "車検証", "zh": [{"s": "行驶证", "pinyin": "xíngshǐzhèng"}, {"s": "机动车登记证", "pinyin": "jīdòngchē dēngjìzhèng"}]}
 {"word": "経験価値", "zh": [{"s": "体验价值", "pinyin": "tǐyàn jiàzhí"}]}
 {"word": "成長事業", "zh": [{"s": "成长型业务", "pinyin": "chéngzhǎngxíng yèwù"}]}
@@ -36267,7 +36267,7 @@
 {"word": "すっ転ぶ", "zh": [{"s": "摔个跟头", "pinyin": "shuāi ge gēntou"}, {"s": "跌倒", "pinyin": "diēdǎo"}]}
 {"word": "判示", "zh": [{"s": "判决指出", "pinyin": "pànjué zhǐchū"}]}
 {"word": "原告適格", "zh": [{"s": "原告资格", "pinyin": "yuángào zīgé"}]}
-{"word": "営業譲渡", "zh": [{"s": "营业转让", "pinyin": "yíngyè zhuǎnràng"}, {"s": "business转让", "pinyin": "yèwù zhuǎnràng"}]}
+{"word": "営業譲渡", "zh": [{"s": "营业转让", "pinyin": "yíngyè zhuǎnràng"}, {"s": "业务转让", "pinyin": "yèwù zhuǎnràng"}]}
 {"word": "株式移転", "zh": [{"s": "股份转移", "pinyin": "gǔfèn zhuǎnyí"}]}
 {"word": "営業譲渡契約書", "zh": [{"s": "营业转让合同", "pinyin": "yíngyè zhuǎnràng hétong"}]}
 {"word": "潜脱", "zh": [{"s": "规避法律", "pinyin": "guībì fǎlǜ"}]}
@@ -36329,7 +36329,7 @@
 {"word": "急性腎不全", "zh": [{"s": "急性肾衰竭", "pinyin": "jíxìng shèn shuāijié"}]}
 {"word": "次数解析", "zh": [], "unsure": true}
 {"word": "郷", "zh": [{"s": "乡", "pinyin": "xiāng"}, {"s": "家乡", "pinyin": "jiāxiāng"}]}
-{"word": "瘤鯛", "zh": [{"s": "瘤唇парр", "pinyin": ""}], "unsure": true}
+{"word": "瘤鯛", "zh": [], "unsure": true}
 {"word": "寒鯛", "zh": [], "unsure": true}
 {"word": "伊良", "zh": [], "unsure": true}
 {"word": "集団主義", "zh": [{"s": "集体主义", "pinyin": "jítǐ zhǔyì"}]}
@@ -36829,7 +36829,7 @@
 {"word": "後脳", "zh": [{"s": "后脑", "pinyin": "hòunǎo"}]}
 {"word": "菱脳", "zh": [{"s": "菱脑", "pinyin": "língnǎo"}]}
 {"word": "前頭骨", "zh": [{"s": "额骨", "pinyin": "égǔ"}]}
-{"word": "側頭骨", "zh": [{"s": "颞骨", "pinyin": "nièg��"}]}
+{"word": "側頭骨", "zh": [{"s": "颞骨", "pinyin": "niègǔ"}]}
 {"word": "後頭骨", "zh": [{"s": "枕骨", "pinyin": "zhěngǔ"}]}
 {"word": "蝶形骨", "zh": [{"s": "蝶骨", "pinyin": "diégǔ"}]}
 {"word": "篩骨", "zh": [{"s": "筛骨", "pinyin": "shāigǔ"}]}
@@ -37531,7 +37531,7 @@
 {"word": "ラムスキン", "zh": [{"s": "羊羔皮", "pinyin": "yáng gāo pí"}]}
 {"word": "ラムダロケット", "zh": [{"s": "兰姆达火箭", "pinyin": "lán mǔ dá huǒ jiàn"}]}
 {"word": "ラメネートスキー", "zh": [], "unsure": true}
-{"word": "ラリアット", "zh": [{"s": "套索", "pinyin": "tào suǒ"}, {"s": "western lariat", "pinyin": "lā lǐ yà tè"}]}
+{"word": "ラリアット", "zh": [{"s": "套索", "pinyin": "tào suǒ"}, {"s": "拉里亚特", "pinyin": "lā lǐ yà tè"}]}
 {"word": "ランゲージ", "zh": [{"s": "语言", "pinyin": "yǔ yán"}]}
 {"word": "ランゲルハンス島", "zh": [{"s": "胰岛", "pinyin": "yí dǎo"}, {"s": "朗格汉斯岛", "pinyin": "lǎng gé hàn sī dǎo"}]}
 {"word": "ランスル", "zh": [], "unsure": true}
@@ -37551,7 +37551,7 @@
 {"word": "ランプウェイ", "zh": [{"s": "坡道", "pinyin": "pō dào"}, {"s": "引桥", "pinyin": "yǐn qiáo"}]}
 {"word": "ランプステーキ", "zh": [{"s": "臀肉牛排", "pinyin": "tún ròu niú pái"}]}
 {"word": "ランレングス", "zh": [{"s": "游程", "pinyin": "yóu chéng"}, {"s": "行程长度", "pinyin": "háng chéng cháng dù"}]}
-{"word": "ら行", "zh": [{"s": "ら行", "pinyin": "ら háng"}, {"s": "日语ra行", "pinyin": "rì yǔ ra háng"}]}
+{"word": "ら行", "zh": [{"s": "ら行", "pinyin": "ra háng"}, {"s": "日语ra行", "pinyin": "rì yǔ ra háng"}]}
 {"word": "リーガル", "zh": [{"s": "法律的", "pinyin": "fǎ lǜ de"}, {"s": "合法的", "pinyin": "hé fǎ de"}]}
 {"word": "リーキ", "zh": [{"s": "韭葱", "pinyin": "jiǔ cōng"}, {"s": "大葱", "pinyin": "dà cōng"}]}
 {"word": "リーケージ", "zh": [{"s": "泄漏", "pinyin": "xiè lòu"}, {"s": "漏电", "pinyin": "lòu diàn"}]}
@@ -38791,7 +38791,7 @@
 {"word": "ネズミザメ", "zh": [{"s": "鼠鲨", "pinyin": "shǔshā"}, {"s": "太平洋鼠鲨", "pinyin": "tàipíngyáng shǔshā"}]}
 {"word": "星鮫", "zh": [{"s": "星鲨", "pinyin": "xīngshā"}, {"s": "白斑星鲨", "pinyin": "báibān xīngshā"}]}
 {"word": "箕作鮫", "zh": [], "unsure": true}
-{"word": "死者の書", "zh": [{"s": "death之书", "pinyin": "sǐzhě zhī shū"}, {"s": "亡灵书", "pinyin": "wánglíngshū"}]}
+{"word": "死者の書", "zh": [{"s": "死者之书", "pinyin": "sǐzhě zhī shū"}, {"s": "亡灵书", "pinyin": "wánglíngshū"}]}
 {"word": "陪都", "zh": [{"s": "陪都", "pinyin": "péidū"}]}
 {"word": "垂れ壁", "zh": [{"s": "垂壁", "pinyin": "chuíbì"}, {"s": "吊顶下垂墙", "pinyin": "diàodǐng xiàchuí qiáng"}]}
 {"word": "ローレライ", "zh": [{"s": "罗蕾莱", "pinyin": "luóléilái"}]}
@@ -38878,7 +38878,7 @@
 {"word": "モニ", "zh": [], "unsure": true}
 {"word": "カウ", "zh": [], "unsure": true}
 {"word": "シケモク", "zh": [{"s": "烟头", "pinyin": "yāntóu"}, {"s": "捡来的烟蒂", "pinyin": "jiǎnlái de yāndì"}]}
-{"word": "ミッシングリンク", "zh": [{"s": "缺失环节", "pinyin": "quēshī huánjié"}, {"s": "missing link", "pinyin": "quēhuán"}]}
+{"word": "ミッシングリンク", "zh": [{"s": "缺失环节", "pinyin": "quēshī huánjié"}, {"s": "缺环", "pinyin": "quēhuán"}]}
 {"word": "火薬陰謀事件", "zh": [{"s": "火药阴谋", "pinyin": "huǒyào yīnmóu"}]}
 {"word": "エキストラクト", "zh": [{"s": "提取物", "pinyin": "tíqǔwù"}, {"s": "萃取物", "pinyin": "cuìqǔwù"}]}
 {"word": "頭出し", "zh": [{"s": "定位到开头", "pinyin": "dìngwèi dào kāitóu"}, {"s": "提前告知", "pinyin": "tíqián gàozhī"}]}
@@ -39392,7 +39392,7 @@
 {"word": "迂生", "zh": [{"s": "愚生", "pinyin": "yúshēng"}, {"s": "鄙人", "pinyin": "bǐrén"}]}
 {"word": "虹彩異色症", "zh": [{"s": "虹膜异色症", "pinyin": "hóngmó yìsèzhèng"}]}
 {"word": "オッドアイ", "zh": [{"s": "异色瞳", "pinyin": "yìsètóng"}, {"s": "鸳鸯眼", "pinyin": "yuānyāngyǎn"}]}
-{"word": "初編", "zh": [{"s": "первый", "pinyin": ""}], "unsure": true}
+{"word": "初編", "zh": [{"s": "第一编", "pinyin": "dì yī biān"}], "unsure": true}
 {"word": "計器盤", "zh": [{"s": "仪表盘", "pinyin": "yíbiǎopán"}]}
 {"word": "幌", "zh": [{"s": "车篷", "pinyin": "chēpéng"}, {"s": "篷布", "pinyin": "péngbù"}]}
 {"word": "増し締め", "zh": [{"s": "复紧", "pinyin": "fùjǐn"}, {"s": "再次拧紧", "pinyin": "zàicì nǐngjǐn"}]}
@@ -39600,7 +39600,7 @@
 {"word": "懶惰", "zh": [{"s": "懒惰", "pinyin": "lǎnduò"}]}
 {"word": "羝羊", "zh": [{"s": "公羊", "pinyin": "gōngyáng"}, {"s": "牡羊", "pinyin": "mǔyáng"}]}
 {"word": "毛衣", "zh": [{"s": "羽毛", "pinyin": "yǔmáo"}, {"s": "毛皮", "pinyin": "máopí"}]}
-{"word": "好逑", "zh": [{"s": "佳偶", "pinyin": "jiā'ǒu"}, {"s": "good match（好逑）", "pinyin": "hǎoqiú"}]}
+{"word": "好逑", "zh": [{"s": "佳偶", "pinyin": "jiā'ǒu"}, {"s": "好逑", "pinyin": "hǎoqiú"}]}
 {"word": "笈", "zh": [{"s": "书箱", "pinyin": "shūxiāng"}, {"s": "笈", "pinyin": "jí"}]}
 {"word": "岌岌", "zh": [{"s": "岌岌可危", "pinyin": "jíjí kěwēi"}, {"s": "危急", "pinyin": "wēijí"}]}
 {"word": "九竅", "zh": [{"s": "九窍", "pinyin": "jiǔqiào"}]}

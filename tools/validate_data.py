@@ -1,0 +1,510 @@
+#!/usr/bin/env python3
+"""zh-ja-dict のデータファイルを全件検証する。
+
+使い方:
+    python3 tools/validate_data.py              # 検証。違反が1件でもあれば終了コード1
+    python3 tools/validate_data.py --counts     # 変種別の件数だけ出す。常に終了コード0
+    python3 tools/validate_data.py --max-report 50
+
+Python 3.9 以上。標準ライブラリだけを使う。
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import re
+import sys
+import unicodedata
+from collections import Counter
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+DEFAULT_DATA_DIR = REPO_ROOT / "data"
+ALLOWLIST_DIR = REPO_ROOT / "tools"
+
+QA_VALUES = {"machine_backed", "llm_ok", "llm_fixed"}
+
+# 訳・候補・読みの件数の上限。生成時に3件までと決めたもので、実データの最大も3である。
+# 正しく超える必要が出たらこの値を変え、README の記述も合わせる。
+MAX_ITEMS = 3
+
+# 漢字（CJK統合漢字と拡張面、互換漢字）。中国語の元素名には拡張B・C面の字が使われる。
+HAN_RANGES = (
+    (0x3400, 0x4DBF),    # 拡張A
+    (0x4E00, 0x9FFF),    # 統合漢字
+    (0xF900, 0xFAFF),    # 互換漢字
+    (0x20000, 0x2A6DF),  # 拡張B
+    (0x2A700, 0x2EBEF),  # 拡張C〜F
+    (0x2F800, 0x2FA1F),  # 互換漢字補助
+    (0x30000, 0x323AF),  # 拡張G・H
+)
+KANA_RANGES = ((0x3041, 0x30FF), (0x31F0, 0x31FF))
+CYRILLIC_RANGES = ((0x0400, 0x04FF), (0x0500, 0x052F))
+
+# ピンイン欄に置いてよい文字。ここに無い文字はすべて違反にする。
+#
+# 「キリル文字を弾く」ではなく「使ってよい文字だけ通す」向きにしてある。
+# 実データには、キリル文字の `т`（U+0442）がラテン文字の `t` の位置に入っていた例や、
+# IPA の `ɡ`（U+0261）が `g` の代わりに入っていた例がある。どちらも見た目で気づけない。
+# 弾く側を列挙する方式では、次に別のスクリプトの同形文字が入ったときに素通しになる。
+PINYIN_LETTERS = (
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜüêḿńňǹ"
+    "ĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛÜÊŃŇǸ"
+)
+# ピンインの音節に数字は出てこない。数字が出るのは `F1杂交种` のような
+# ラテン文字の略号の一部としてだけである。そこで数字そのものは許さず、
+# 「数字を含む英数字の並び」を確認済みのものだけ通す。
+# 無条件に数字を許していたとき、`衣锦荣归` の壊れたピンイン `yījǐnr645guī` を
+# 見逃していた（独立レビューの指摘、2026-09-01）。
+PINYIN_DIGIT_TOKENS = frozenset({"F1"})
+ALNUM_RUN = re.compile(r"[A-Za-z0-9]+")
+# 声調記号を合成で書く行がある（呒 `m̄`、呣 `m̀`）。
+PINYIN_COMBINING = "̀́̄̌"
+# 分かち書き・音節境界・区切り・省略の記号。実データで使われているものだけを載せる。
+PINYIN_PUNCTUATION = " '-.,()（）／，…"
+# 学術用語の接頭辞（β-内酰胺类、θ函数）。
+PINYIN_GREEK = "βθ"
+PINYIN_ALLOWED = frozenset(PINYIN_LETTERS + PINYIN_COMBINING + PINYIN_PUNCTUATION + PINYIN_GREEK)
+
+
+def _in_ranges(ch: str, ranges) -> bool:
+    code = ord(ch)
+    return any(low <= code <= high for low, high in ranges)
+
+
+def is_han(ch: str) -> bool:
+    return _in_ranges(ch, HAN_RANGES)
+
+
+def is_kana(ch: str) -> bool:
+    return _in_ranges(ch, KANA_RANGES)
+
+
+def is_cyrillic(ch: str) -> bool:
+    return _in_ranges(ch, CYRILLIC_RANGES)
+
+
+def is_latin_letter(ch: str) -> bool:
+    return ch.isalpha() and ord(ch) < 0x0250
+
+
+def latin_tokens(text: str) -> list[str]:
+    """連続するラテン文字を1つの語として取り出す。"""
+    tokens, current = [], []
+    for ch in text:
+        if is_latin_letter(ch):
+            current.append(ch)
+        else:
+            if current:
+                tokens.append("".join(current))
+                current = []
+    if current:
+        tokens.append("".join(current))
+    return tokens
+
+
+class Violation:
+    __slots__ = ("path", "line", "word", "kind", "detail")
+
+    def __init__(self, path: str, line: int, word, kind: str, detail: str):
+        self.path = path
+        self.line = line
+        self.word = word
+        self.kind = kind
+        self.detail = detail
+
+    def __str__(self) -> str:
+        word = self.word if isinstance(self.word, str) and self.word else "?"
+        return f"{self.path}:{self.line}\t[{self.kind}]\t{word}\t{self.detail}"
+
+
+def load_allowlist(name: str) -> set[str]:
+    path = ALLOWLIST_DIR / name
+    if not path.exists():
+        return set()
+    entries = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if line:
+            entries.add(line)
+    return entries
+
+
+ALLOWED_LATIN = load_allowlist("allowlist-latin.txt")
+ALLOWED_KANA_IN_CHINESE = load_allowlist("allowlist-kana-in-chinese.txt")
+
+
+def read_jsonl(path: pathlib.Path, violations: list[Violation], name: str | None = None):
+    """1行ずつ読む。壊れた行は違反として記録し、読めた行だけ返す。
+
+    `name` は違反の表示に使う相対名。2つの `glosses.jsonl` を区別するために要る。
+    """
+    name = name or path.name
+    rows = []
+    raw = path.read_bytes()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        violations.append(Violation(name, 0, None, "bom", "先頭にBOMがある"))
+    if b"\r" in raw:
+        violations.append(Violation(name, 0, None, "crlf", "改行にCRが混じっている"))
+    if raw and not raw.endswith(b"\n"):
+        violations.append(Violation(name, 0, None, "no-final-newline", "末尾に改行が無い"))
+    try:
+        # BOM があっても最初の行を壊さないよう utf-8-sig で読む（BOM 自体は上で報告済み）。
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        # 途中で止めず、読めない箇所を U+FFFD にして続ける。下の replacement-char が拾う。
+        violations.append(Violation(name, 0, None, "invalid-utf8", f"UTF-8として読めない箇所がある: {exc}"))
+        text = raw.decode("utf-8-sig", errors="replace")
+    for number, line in enumerate(text.splitlines(), start=1):
+        if not line.strip():
+            violations.append(Violation(name, number, None, "blank-line", "空行"))
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as exc:
+            violations.append(Violation(name, number, None, "broken-json", str(exc)))
+            continue
+        if not isinstance(obj, dict):
+            violations.append(Violation(name, number, None, "not-object", f"{type(obj).__name__} を得た"))
+            continue
+        if "�" in line:
+            # 文字化けの跡。元の文字が失われているので、機械では直せない。
+            violations.append(Violation(name, number, obj.get("word"), "replacement-char", f"U+FFFD がある: {line}"))
+        rows.append((number, obj))
+    return rows
+
+
+def check_common_keys(name, number, obj, required, optional, violations) -> bool:
+    keys = set(obj)
+    missing = required - keys
+    unknown = keys - required - optional
+    ok = True
+    for key in sorted(missing):
+        violations.append(Violation(name, number, obj.get("word"), "missing-key", f"必須キー {key!r} が無い"))
+        ok = False
+    for key in sorted(unknown):
+        violations.append(Violation(name, number, obj.get("word"), "unknown-key", f"仕様に無いキー {key!r}（値 {obj[key]!r}）"))
+        ok = False
+    return ok
+
+
+def check_word(name, number, obj, violations) -> None:
+    word = obj.get("word")
+    if not isinstance(word, str) or not word:
+        violations.append(Violation(name, number, None, "bad-word", f"word が文字列でないか空: {word!r}"))
+    elif word != word.strip():
+        violations.append(Violation(name, number, word, "whitespace", "word の前後に空白がある"))
+
+
+def check_unsure(name, number, obj, violations) -> None:
+    """`unsure` は「立てるときだけ true で書く」。false を明示しない。"""
+    if "unsure" in obj and obj["unsure"] is not True:
+        violations.append(
+            Violation(name, number, obj.get("word"), "explicit-false",
+                      f"unsure は true のときだけ書く。{obj['unsure']!r} が入っている")
+        )
+
+
+def check_text(name, number, word, field, text, violations, *, language) -> None:
+    """訳の文字列そのものを見る。空・前後空白・言語混入を検出する。"""
+    if not isinstance(text, str):
+        violations.append(Violation(name, number, word, "bad-type", f"{field} が文字列でない: {text!r}"))
+        return
+    if not text:
+        violations.append(Violation(name, number, word, "empty-string", f"{field} が空文字"))
+        return
+    if text != text.strip():
+        violations.append(Violation(name, number, word, "whitespace", f"{field} の前後に空白がある: {text!r}"))
+    if any(is_cyrillic(ch) for ch in text):
+        violations.append(Violation(name, number, word, "cyrillic", f"{field} にキリル文字: {text!r}"))
+    for token in latin_tokens(text):
+        if token not in ALLOWED_LATIN:
+            violations.append(
+                Violation(name, number, word, "foreign-latin",
+                          f"{field} に未登録のラテン語 {token!r}: {text!r}")
+            )
+    # 数字だけの訳（「十一」→「11」など）は正しいので、内容の判定から除く。
+    has_digit = any(ch.isdigit() for ch in text)
+    if language == "zh":
+        if any(is_kana(ch) for ch in text) and text not in ALLOWED_KANA_IN_CHINESE:
+            violations.append(Violation(name, number, word, "kana-in-chinese", f"{field} にかな: {text!r}"))
+        if not any(is_han(ch) for ch in text) and not latin_tokens(text) and not has_digit:
+            violations.append(Violation(name, number, word, "no-han", f"{field} に中国語の文字が無い: {text!r}"))
+    elif language == "ja":
+        if not any(is_han(ch) or is_kana(ch) for ch in text) and not latin_tokens(text) and not has_digit:
+            violations.append(Violation(name, number, word, "no-japanese", f"{field} に日本語の文字が無い: {text!r}"))
+
+
+def check_pinyin(name, number, word, pinyin, violations, *, field="pinyin") -> None:
+    if not isinstance(pinyin, str):
+        violations.append(Violation(name, number, word, "bad-type", f"{field} が文字列でない: {pinyin!r}"))
+        return
+    if not pinyin:
+        violations.append(Violation(name, number, word, "empty-pinyin", f"{field} が空文字"))
+        return
+    if pinyin != pinyin.strip():
+        violations.append(Violation(name, number, word, "whitespace", f"{field} の前後に空白がある: {pinyin!r}"))
+    for token in ALNUM_RUN.findall(pinyin):
+        if any(ch.isdigit() for ch in token) and token not in PINYIN_DIGIT_TOKENS:
+            violations.append(
+                Violation(name, number, word, "bad-pinyin",
+                          f"{field} に未登録の数字入りの並び {token!r}: {pinyin!r}")
+            )
+            return
+    for ch in pinyin:
+        if ch.isascii() and ch.isdigit():
+            # 上のループで、ASCIIの数字を含む並びは確認済みのものだけと分かっている。
+            # ASCII以外の数字（全角 `１`、アラビア数字 `٣` など）はここを通さず、
+            # PINYIN_ALLOWED に無いものとして下で違反にする。
+            continue
+        if ch not in PINYIN_ALLOWED:
+            violations.append(
+                Violation(name, number, word, "bad-pinyin",
+                          f"{field} に U+{ord(ch):04X} {unicodedata.name(ch, '名前なし')} が入っている: {pinyin!r}")
+            )
+            break
+
+
+def check_duplicate_words(name, rows, violations) -> None:
+    seen: dict[str, int] = {}
+    for number, obj in rows:
+        word = obj.get("word")
+        if not isinstance(word, str) or not word:
+            continue
+        if word in seen:
+            violations.append(Violation(name, number, word, "duplicate-word", f"行 {seen[word]} と重複"))
+        else:
+            seen[word] = number
+
+
+def validate_zh_ja_glosses(path, rows, violations) -> Counter:
+    name = "zh-ja/glosses.jsonl"
+    counts: Counter = Counter()
+    required = {"word", "pinyin", "gloss", "qa"}
+    optional = {"unsure"}
+    for number, obj in rows:
+        check_common_keys(name, number, obj, required, optional, violations)
+        check_word(name, number, obj, violations)
+        check_unsure(name, number, obj, violations)
+        word = obj.get("word")
+
+        if "pinyin" in obj:
+            check_pinyin(name, number, word, obj["pinyin"], violations)
+
+        qa = obj.get("qa")
+        # 値が null でも違反にする（キーが無い場合は上の missing-key が拾う）。
+        if "qa" in obj and qa not in QA_VALUES:
+            violations.append(Violation(name, number, word, "bad-qa", f"qa が想定外の値: {qa!r}"))
+
+        gloss = obj.get("gloss")
+        unsure = obj.get("unsure") is True
+        if not isinstance(gloss, list):
+            violations.append(Violation(name, number, word, "bad-type", f"gloss が配列でない: {gloss!r}"))
+            continue
+        for item in gloss:
+            check_text(name, number, word, "gloss", item, violations, language="ja")
+        if not gloss and not unsure:
+            violations.append(Violation(name, number, word, "empty-without-unsure", "gloss が空なのに unsure が無い"))
+        if len(gloss) > MAX_ITEMS:
+            violations.append(Violation(name, number, word, "too-many-items", f"gloss が {len(gloss)} 件（上限 {MAX_ITEMS}）"))
+
+        # 区分は排他。合計が行数に一致する。
+        if "pinyin" not in obj:
+            counts["pinyinキー欠落"] += 1
+        elif unsure and gloss:
+            counts["unsure・gloss非空"] += 1
+        elif unsure:
+            counts["unsure・gloss空"] += 1
+        else:
+            counts["通常"] += 1
+        counts["_qa:" + str(qa)] += 1
+    check_duplicate_words(name, rows, violations)
+    return counts
+
+
+def validate_polyphonic(path, rows, violations) -> Counter:
+    name = "zh-ja/polyphonic.jsonl"
+    counts: Counter = Counter()
+    for number, obj in rows:
+        check_common_keys(name, number, obj, {"word", "senses"}, {"unsure"}, violations)
+        check_word(name, number, obj, violations)
+        check_unsure(name, number, obj, violations)
+        word = obj.get("word")
+
+        senses = obj.get("senses")
+        unsure = obj.get("unsure") is True
+        if not isinstance(senses, list):
+            violations.append(Violation(name, number, word, "bad-type", f"senses が配列でない: {senses!r}"))
+            continue
+        for index, sense in enumerate(senses):
+            if not isinstance(sense, dict):
+                violations.append(Violation(name, number, word, "bad-type", f"senses[{index}] がオブジェクトでない: {sense!r}"))
+                continue
+            extra = set(sense) - {"pinyin", "gloss"}
+            for key in sorted(extra):
+                violations.append(
+                    Violation(name, number, word, "unknown-key",
+                              f"senses[{index}] に仕様に無いキー {key!r}（値 {sense[key]!r}）")
+                )
+            if "pinyin" not in sense:
+                violations.append(Violation(name, number, word, "missing-key", f"senses[{index}] に pinyin が無い"))
+            else:
+                check_pinyin(name, number, word, sense["pinyin"], violations, field=f"senses[{index}].pinyin")
+            sense_gloss = sense.get("gloss")
+            if not isinstance(sense_gloss, list):
+                violations.append(Violation(name, number, word, "bad-type", f"senses[{index}].gloss が配列でない: {sense_gloss!r}"))
+                continue
+            if not sense_gloss:
+                violations.append(Violation(name, number, word, "empty-sense-gloss", f"senses[{index}].gloss が空"))
+            for item in sense_gloss:
+                check_text(name, number, word, f"senses[{index}].gloss", item, violations, language="ja")
+
+        if not senses and not unsure:
+            violations.append(Violation(name, number, word, "empty-without-unsure", "senses が空なのに unsure が無い"))
+        if len(senses) > MAX_ITEMS:
+            violations.append(Violation(name, number, word, "too-many-items", f"senses が {len(senses)} 件（上限 {MAX_ITEMS}）"))
+        if senses:
+            counts["senses非空"] += 1
+            counts["_読み数:%d" % len(senses)] += 1
+        else:
+            counts["unsure・senses空"] += 1
+        # 属性（区分をまたぐ数え方）。合計には足さない。
+        if isinstance(senses, list) and any(isinstance(s, dict) and "unsure" in s for s in senses):
+            counts["_属性:入れ子のunsure"] += 1
+    check_duplicate_words(name, rows, violations)
+    return counts
+
+
+def validate_ja_zh_glosses(path, rows, violations) -> Counter:
+    name = "ja-zh/glosses.jsonl"
+    counts: Counter = Counter()
+    for number, obj in rows:
+        check_common_keys(name, number, obj, {"word", "zh"}, {"unsure"}, violations)
+        check_word(name, number, obj, violations)
+        check_unsure(name, number, obj, violations)
+        word = obj.get("word")
+
+        candidates = obj.get("zh")
+        unsure = obj.get("unsure") is True
+        if not isinstance(candidates, list):
+            violations.append(Violation(name, number, word, "bad-type", f"zh が配列でない: {candidates!r}"))
+            continue
+        seen_surfaces = set()
+        for index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                violations.append(Violation(name, number, word, "bad-type", f"zh[{index}] がオブジェクトでない: {candidate!r}"))
+                continue
+            extra = set(candidate) - {"s", "pinyin"}
+            for key in sorted(extra):
+                violations.append(
+                    Violation(name, number, word, "unknown-key",
+                              f"zh[{index}] に仕様に無いキー {key!r}（値 {candidate[key]!r}）")
+                )
+            if "s" not in candidate:
+                violations.append(Violation(name, number, word, "missing-key", f"zh[{index}] に s が無い"))
+            else:
+                check_text(name, number, word, f"zh[{index}].s", candidate["s"], violations, language="zh")
+                # s が文字列でないときは check_text が bad-type を出している。
+                # set へ入れると非hashableな型（配列など）で TypeError になるため、重複検査は飛ばす。
+                if isinstance(candidate["s"], str):
+                    if candidate["s"] in seen_surfaces:
+                        violations.append(Violation(name, number, word, "duplicate-candidate", f"zh[{index}].s が重複: {candidate['s']!r}"))
+                    seen_surfaces.add(candidate["s"])
+            if "pinyin" not in candidate:
+                violations.append(Violation(name, number, word, "missing-key", f"zh[{index}] に pinyin が無い"))
+            else:
+                check_pinyin(name, number, word, candidate["pinyin"], violations, field=f"zh[{index}].pinyin")
+
+        if not candidates and not unsure:
+            violations.append(Violation(name, number, word, "empty-without-unsure", "zh が空なのに unsure が無い"))
+        if len(candidates) > MAX_ITEMS:
+            violations.append(Violation(name, number, word, "too-many-items", f"zh が {len(candidates)} 件（上限 {MAX_ITEMS}）"))
+
+        # 区分は排他。合計が行数に一致する。
+        if "unsure" in obj and obj["unsure"] is False:
+            counts["unsure:false（明示的な偽）"] += 1
+        elif unsure and candidates:
+            counts["unsure・zh非空"] += 1
+        elif unsure:
+            counts["unsure・zh空"] += 1
+        else:
+            counts["通常"] += 1
+        # 属性（区分をまたぐ数え方）。合計には足さない。
+        counts["_候補数:%d" % len(candidates)] += 1
+        if "pinyin" in obj:
+            counts["_属性:トップレベルpinyin"] += 1
+        if any(isinstance(c, dict) and c.get("s") == "" for c in candidates):
+            counts["_属性:空文字の候補"] += 1
+        if any(isinstance(c, dict) and c.get("pinyin") == "" for c in candidates):
+            counts["_属性:空文字のpinyin"] += 1
+    check_duplicate_words(name, rows, violations)
+    return counts
+
+
+FILES = (
+    ("zh-ja/glosses.jsonl", validate_zh_ja_glosses),
+    ("zh-ja/polyphonic.jsonl", validate_polyphonic),
+    ("ja-zh/glosses.jsonl", validate_ja_zh_glosses),
+)
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="zh-ja-dict のデータを全件検証する")
+    parser.add_argument("--data", type=pathlib.Path, default=DEFAULT_DATA_DIR, help="データディレクトリ")
+    parser.add_argument("--counts", action="store_true", help="件数だけ出して常に成功で終わる")
+    parser.add_argument("--max-report", type=int, default=200, help="表示する違反の上限（既定 200）")
+    args = parser.parse_args(argv)
+
+    violations: list[Violation] = []
+    total_lines = 0
+    summary = []
+
+    for relative, validate in FILES:
+        path = args.data / relative
+        if not path.exists():
+            print(f"データファイルが見つからない: {path}", file=sys.stderr)
+            return 2
+        rows = read_jsonl(path, violations, relative)
+        counts = validate(path, rows, violations)
+        total_lines += len(rows)
+        summary.append((relative, len(rows), counts))
+
+    for relative, line_count, counts in summary:
+        print(f"## {relative}（{line_count:,}行）")
+        variants = {k: v for k, v in counts.items() if not k.startswith("_")}
+        for key in sorted(variants, key=lambda k: -variants[k]):
+            print(f"  {key:<24} {variants[key]:>7,}")
+        subtotal = sum(variants.values())
+        mark = "一致" if subtotal == line_count else "不一致"
+        print(f"  {'区分の合計':<24} {subtotal:>7,}  （行数と{mark}）")
+        for key in sorted(k for k in counts if k.startswith("_")):
+            print(f"  {key[1:]:<24} {counts[key]:>7,}")
+        print()
+
+    print(f"合計 {total_lines:,}行")
+
+    if args.counts:
+        print(f"（--counts のため検証結果を終了コードに反映しない。違反 {len(violations):,} 件）")
+        return 0
+
+    if not violations:
+        print("違反 0 件")
+        return 0
+
+    by_kind = Counter(v.kind for v in violations)
+    print(f"\n違反 {len(violations):,} 件")
+    for kind, count in by_kind.most_common():
+        print(f"  {kind:<24} {count:>7,}")
+    print()
+    for violation in violations[: args.max_report]:
+        print(violation)
+    if len(violations) > args.max_report:
+        print(f"... 残り {len(violations) - args.max_report:,} 件（--max-report で増やせる）")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
