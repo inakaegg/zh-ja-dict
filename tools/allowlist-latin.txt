@@ -65,10 +65,12 @@ PostScript
 README
 Synclavier
 UBS
+WeChat
 Windows
 YOSAKOI
 
 # --- 情報・通信 ---
+AI
 App
 ATM
 Big
@@ -102,10 +104,13 @@ PHS
 PK
 PR
 PVC
+QR
 ROM
 SIM
 SP
+URL
 USB
+VIP
 VR
 WAN
 
@@ -141,6 +146,7 @@ EMS
 EQ
 FBI
 IELTS
+IQ
 KGB
 SWAT
 TOEFL
