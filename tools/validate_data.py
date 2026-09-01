@@ -29,6 +29,12 @@ QA_VALUES = {"machine_backed", "llm_ok", "llm_fixed"}
 # 正しく超える必要が出たらこの値を変え、README の記述も合わせる。
 MAX_ITEMS = 3
 
+# HSK の級の範囲。HSK 3.0 は7級まであり、3.0 に級を持たない語だけ 2.0 の級（6級まで）を使う。
+# 2つの尺度が1つの欄に混ざるため、どちらの版から来た値かはデータから判別できない。
+# 規則と件数は README に書いてある。
+HSK_MIN_LEVEL = 1
+HSK_MAX_LEVEL = 7
+
 # 漢字（CJK統合漢字と拡張面、互換漢字）。中国語の元素名には拡張B・C面の字が使われる。
 HAN_RANGES = (
     (0x3400, 0x4DBF),    # 拡張A
@@ -199,6 +205,25 @@ def check_word(name, number, obj, violations) -> None:
         violations.append(Violation(name, number, word, "whitespace", "word の前後に空白がある"))
 
 
+def check_hsk(name, number, obj, violations) -> None:
+    """`hsk` は HSK の級。任意のキーで、持つ行は HSK 語である。"""
+    if "hsk" not in obj:
+        return
+    level = obj["hsk"]
+    # bool は int の派生なので、先に弾かないと True が 1級として通る。
+    if isinstance(level, bool) or not isinstance(level, int):
+        violations.append(
+            Violation(name, number, obj.get("word"), "bad-hsk",
+                      f"hsk が整数でない: {level!r}")
+        )
+        return
+    if not HSK_MIN_LEVEL <= level <= HSK_MAX_LEVEL:
+        violations.append(
+            Violation(name, number, obj.get("word"), "bad-hsk",
+                      f"hsk が {HSK_MIN_LEVEL}〜{HSK_MAX_LEVEL} の外: {level}")
+        )
+
+
 def check_unsure(name, number, obj, violations) -> None:
     """`unsure` は「立てるときだけ true で書く」。false を明示しない。"""
     if "unsure" in obj and obj["unsure"] is not True:
@@ -284,11 +309,12 @@ def validate_zh_ja_glosses(path, rows, violations) -> Counter:
     name = "zh-ja/glosses.jsonl"
     counts: Counter = Counter()
     required = {"word", "pinyin", "gloss", "qa"}
-    optional = {"unsure"}
+    optional = {"unsure", "hsk"}
     for number, obj in rows:
         check_common_keys(name, number, obj, required, optional, violations)
         check_word(name, number, obj, violations)
         check_unsure(name, number, obj, violations)
+        check_hsk(name, number, obj, violations)
         word = obj.get("word")
 
         if "pinyin" in obj:
@@ -321,6 +347,12 @@ def validate_zh_ja_glosses(path, rows, violations) -> Counter:
         else:
             counts["通常"] += 1
         counts["_qa:" + str(qa)] += 1
+        # 属性（区分をまたぐ数え方）。合計には足さない。
+        # HSK 語も `unsure` を持ちうるので、排他の区分には入れない。
+        if "hsk" in obj:
+            counts["_属性:hsk有り"] += 1
+            if isinstance(obj["hsk"], int) and not isinstance(obj["hsk"], bool):
+                counts["_属性:hsk %d級" % obj["hsk"]] += 1
     check_duplicate_words(name, rows, violations)
     return counts
 
