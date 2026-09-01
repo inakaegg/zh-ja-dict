@@ -212,6 +212,68 @@ class LanguageTest(unittest.TestCase):
         self.assertEqual(kinds, [])
 
 
+ABSENT = object()  # 「キーを書かない」を、値が None であることと区別するための印
+
+
+class HskTest(unittest.TestCase):
+    def base(self, hsk):
+        row = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"}
+        if hsk is not ABSENT:
+            row["hsk"] = hsk
+        return with_change(ZH_JA, 0, row)
+
+    def test_有効な級は違反にしない(self):
+        for level in range(1, 8):
+            kinds, _ = run(self.base(level))
+            self.assertEqual(kinds, [], f"hsk={level}")
+
+    def test_hskが無くても違反にしない(self):
+        kinds, _ = run(self.base(ABSENT))
+        self.assertEqual(kinds, [])
+
+    def test_明示的なnullを報告する(self):
+        # `"pinyin": null` や `"unsure": false` と同じく、書くなら値を持たせる。
+        kinds, _ = run(self.base(None))
+        self.assertIn("bad-hsk", kinds)
+
+    def test_範囲の外を報告する(self):
+        for level in (0, 8, -1, 99):
+            kinds, _ = run(self.base(level))
+            self.assertIn("bad-hsk", kinds, f"hsk={level}")
+
+    def test_整数でない値を報告する(self):
+        for level in ("3", 3.0, None, [3], {"3.0": 3}):
+            kinds, _ = run(self.base(level))
+            self.assertIn("bad-hsk", kinds, f"hsk={level!r}")
+
+    def test_真偽値を報告する(self):
+        # Python では bool が int の派生なので、True は素通しになりやすい。
+        for level in (True, False):
+            kinds, _ = run(self.base(level))
+            self.assertIn("bad-hsk", kinds, f"hsk={level!r}")
+
+    def test_hskは区分ではなく属性として数える(self):
+        # hsk を持つ行が、通常・unsure の排他の区分を崩さないこと。
+        _, counts = run(self.base(3))
+        c = counts[ZH_JA]
+        exclusive = sum(v for k, v in c.items() if not k.startswith("_"))
+        self.assertEqual(exclusive, len(CLEAN[ZH_JA]))
+        self.assertEqual(c["_属性:hsk有り"], 1)
+        self.assertEqual(c["_属性:hsk 3級"], 1)
+
+    def test_unsureとhskは同時に立てられる(self):
+        row = {"word": "幖", "pinyin": "biāo", "gloss": [], "unsure": True, "qa": "llm_ok", "hsk": 7}
+        kinds, counts = run(with_change(ZH_JA, 1, row))
+        self.assertEqual(kinds, [])
+        self.assertEqual(counts[ZH_JA]["_属性:hsk有り"], 1)
+
+    def test_他の2ファイルにhskを書いたら仕様外のキーとして報告する(self):
+        kinds, _ = run(with_change(POLY, 0, {"word": "似", "senses": [{"pinyin": "sì", "gloss": ["似ている"]}], "hsk": 3}))
+        self.assertIn("unknown-key", kinds)
+        kinds, _ = run(with_change(JA_ZH, 0, {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}], "hsk": 3}))
+        self.assertIn("unknown-key", kinds)
+
+
 class ItemCountTest(unittest.TestCase):
     def test_glossが上限を超えたら報告する(self):
         change = {"word": "美国", "pinyin": "Měiguó", "gloss": ["ア", "メ", "リ", "カ"], "qa": "llm_ok"}
