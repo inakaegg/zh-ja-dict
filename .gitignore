@@ -1,0 +1,15 @@
+# 作業中のタスク記録（このリポジトリでは版管理しない）
+/_ai/
+
+# 検討中の下書き・外部からの引用など、公開しない一時ファイル
+/tmp/
+
+# git worktree の置き場
+/.worktrees/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
