@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "generated": "2026-09-03",
+  "files": {
+    "zh-ja/glosses.jsonl": {
+      "lines": 96326
+    },
+    "ja-zh/glosses.jsonl": {
+      "lines": 40000
+    }
+  }
+}
