@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """zh-ja-dict のデータファイルを全件検証する。
 
+schema 2（1行 = (語, 読み)）を対象とする。
+
 使い方:
     python3 tools/validate_data.py              # 検証。違反が1件でもあれば終了コード1
     python3 tools/validate_data.py --counts     # 変種別の件数だけ出す。常に終了コード0
@@ -23,17 +25,30 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = REPO_ROOT / "data"
 ALLOWLIST_DIR = REPO_ROOT / "tools"
 
-QA_VALUES = {"machine_backed", "llm_ok", "llm_fixed"}
+SCHEMA_VERSION = 2
 
-# 訳・候補・読みの件数の上限。生成時に3件までと決めたもので、実データの最大も3である。
-# 正しく超える必要が出たらこの値を変え、README の記述も合わせる。
-MAX_ITEMS = 3
+QA_VALUES = {"machine_backed", "llm_ok", "llm_fixed", "human_reviewed", "unchecked"}
 
-# HSK の級の範囲。HSK 3.0 は7級まであり、3.0 に級を持たない語だけ 2.0 の級（6級まで）を使う。
-# 2つの尺度が1つの欄に混ざるため、どちらの版から来た値かはデータから判別できない。
-# 規則と件数は README に書いてある。
-HSK_MIN_LEVEL = 1
-HSK_MAX_LEVEL = 7
+# 退役したキー。schema 2 では意味を失った（`hsk2`/`hsk3` へ分けた）。
+# 1件でもあれば古い形式のデータなので、未知のキーではなく専用の違反として報告する。
+RETIRED_KEYS = {"hsk"}
+
+# 品詞。上流（complete-hsk-vocabulary）の略号をそのまま使う。
+# `interjection` だけ英単語だが、上流の `senses[].pos` に実在する（`哦`・`嗯`）。
+POS_VALUES = frozenset(
+    "Mg Rg a ad an b c cc d e f g h k l m mq n nr ns nt nz o p q qt qv r s t tg u v vn y z".split()
+)
+READING_POS_VALUES = POS_VALUES | {"interjection"}
+
+# 大小文字だけが違う組のうち、人が「本当に別の語」と判定した語（TASK.md D5）。
+CASE_KEEP = {"包头", "酂"}
+
+# 訳・候補・読みの件数に上限は設けない。形式としては「空でない・重複がない」だけを見る。
+# 生成のときは1〜3件を目安にしたが、それは生成方針であって形式の制約ではない。
+
+# HSK の級の範囲。版ごとに上限が違う（2.0 は6級まで、3.0 は7級まで）。
+HSK2_MIN_LEVEL, HSK2_MAX_LEVEL = 1, 6
+HSK3_MIN_LEVEL, HSK3_MAX_LEVEL = 1, 7
 
 # 漢字（CJK統合漢字と拡張面、互換漢字）。中国語の元素名には拡張B・C面の字が使われる。
 HAN_RANGES = (
@@ -74,6 +89,18 @@ PINYIN_PUNCTUATION = " '-.,()（）／，…"
 # 学術用語の接頭辞（β-内酰胺类、θ函数）。
 PINYIN_GREEK = "βθ"
 PINYIN_ALLOWED = frozenset(PINYIN_LETTERS + PINYIN_COMBINING + PINYIN_PUNCTUATION + PINYIN_GREEK)
+
+
+def normalized_pinyin(word: str, pinyin: str) -> str:
+    """(語, 読み) の一意性を見るための鍵（TASK.md D5）。
+
+    空白・アポストロフィ・ハイフン・軽声の印（末尾の `5`、`˙`）を除き、
+    原則として小文字化する。`CASE_KEEP` の語だけ大小文字を保つ。
+    """
+    text = pinyin.replace(" ", "").replace("'", "").replace("-", "").replace("\u02d9", "")
+    if text.endswith("5"):
+        text = text[:-1]
+    return text if word in CASE_KEEP else text.lower()
 
 
 def _in_ranges(ch: str, ranges) -> bool:
@@ -205,23 +232,59 @@ def check_word(name, number, obj, violations) -> None:
         violations.append(Violation(name, number, word, "whitespace", "word の前後に空白がある"))
 
 
-def check_hsk(name, number, obj, violations) -> None:
-    """`hsk` は HSK の級。任意のキーで、持つ行は HSK 語である。"""
-    if "hsk" not in obj:
+def check_hsk_level(name, number, obj, key, low, high, violations) -> None:
+    """`hsk2` / `hsk3` は版ごとの HSK の級。任意のキー。"""
+    if key not in obj:
         return
-    level = obj["hsk"]
+    level = obj[key]
     # bool は int の派生なので、先に弾かないと True が 1級として通る。
     if isinstance(level, bool) or not isinstance(level, int):
         violations.append(
-            Violation(name, number, obj.get("word"), "bad-hsk",
-                      f"hsk が整数でない: {level!r}")
+            Violation(name, number, obj.get("word"), "bad-hsk", f"{key} が整数でない: {level!r}")
         )
         return
-    if not HSK_MIN_LEVEL <= level <= HSK_MAX_LEVEL:
+    if not low <= level <= high:
         violations.append(
             Violation(name, number, obj.get("word"), "bad-hsk",
-                      f"hsk が {HSK_MIN_LEVEL}〜{HSK_MAX_LEVEL} の外: {level}")
+                      f"{key} が {low}〜{high} の外: {level}")
         )
+
+
+def check_retired_keys(name, number, obj, violations) -> None:
+    """退役キーを持つ行は古い形式である。未知のキーと区別して報告する。"""
+    for key in sorted(RETIRED_KEYS & set(obj)):
+        violations.append(
+            Violation(name, number, obj.get("word"), "retired-key",
+                      f"退役したキー {key!r} がある（schema 2 では hsk2 / hsk3 に分かれた）")
+        )
+
+
+def check_string_array(name, number, word, field, value, violations, *, allowed=None) -> bool:
+    """任意キーの文字列配列。配列であること・空でないこと・重複がないことを見る。"""
+    if not isinstance(value, list):
+        violations.append(Violation(name, number, word, "bad-type", f"{field} が配列でない: {value!r}"))
+        return False
+    if not value:
+        violations.append(Violation(name, number, word, "empty-array", f"{field} が空配列"))
+        return False
+    ok = True
+    seen = set()
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item:
+            violations.append(Violation(name, number, word, "bad-type", f"{field}[{index}] が空でない文字列でない: {item!r}"))
+            ok = False
+            continue
+        if item != item.strip():
+            violations.append(Violation(name, number, word, "whitespace", f"{field}[{index}] の前後に空白がある: {item!r}"))
+            ok = False
+        if item in seen:
+            violations.append(Violation(name, number, word, "duplicate-item", f"{field} に重複 {item!r}"))
+            ok = False
+        seen.add(item)
+        if allowed is not None and item not in allowed:
+            violations.append(Violation(name, number, word, "unknown-value", f"{field} に仕様にない値 {item!r}"))
+            ok = False
+    return ok
 
 
 def check_unsure(name, number, obj, violations) -> None:
@@ -294,6 +357,7 @@ def check_pinyin(name, number, word, pinyin, violations, *, field="pinyin") -> N
 
 
 def check_duplicate_words(name, rows, violations) -> None:
+    """見出し語の重複を見る。`ja-zh` は語が単位なので今も1語1行である。"""
     seen: dict[str, int] = {}
     for number, obj in rows:
         word = obj.get("word")
@@ -305,16 +369,59 @@ def check_duplicate_words(name, rows, violations) -> None:
             seen[word] = number
 
 
+def check_duplicate_word_pinyin(name, rows, violations) -> None:
+    """中日は (語, 読み) が単位。D5 の正規化をしたうえで重複を見る。"""
+    seen: dict[tuple, int] = {}
+    for number, obj in rows:
+        word, pinyin = obj.get("word"), obj.get("pinyin")
+        if not isinstance(word, str) or not word or not isinstance(pinyin, str) or not pinyin:
+            continue
+        key = (word, normalized_pinyin(word, pinyin))
+        if key in seen:
+            violations.append(
+                Violation(name, number, word, "duplicate-word-pinyin",
+                          f"読み {pinyin!r} が行 {seen[key]} と重複（正規化後 {key[1]!r}）")
+            )
+        else:
+            seen[key] = number
+
+
+# 語の属性。同じ語のすべての行で一致していなければならない（TASK.md D12）。
+# `reading_pos` は行の属性なので入れない。
+WORD_ATTRIBUTES = ("hsk2", "hsk3", "trad", "pos", "alt_pinyin")
+
+
+def check_word_attributes(name, rows, violations) -> None:
+    first: dict[str, tuple] = {}
+    for number, obj in rows:
+        word = obj.get("word")
+        if not isinstance(word, str) or not word:
+            continue
+        current = tuple(json.dumps(obj.get(k), ensure_ascii=False, sort_keys=True) for k in WORD_ATTRIBUTES)
+        if word not in first:
+            first[word] = (number, current)
+            continue
+        before_number, before = first[word]
+        if before != current:
+            differing = [k for k, a, b in zip(WORD_ATTRIBUTES, before, current) if a != b]
+            violations.append(
+                Violation(name, number, word, "attribute-mismatch",
+                          f"語の属性が行 {before_number} と食い違う: {differing}")
+            )
+
+
 def validate_zh_ja_glosses(path, rows, violations) -> Counter:
     name = "zh-ja/glosses.jsonl"
     counts: Counter = Counter()
     required = {"word", "pinyin", "gloss", "qa"}
-    optional = {"unsure", "hsk"}
+    optional = {"unsure", "hsk2", "hsk3", "trad", "pos", "reading_pos", "alt_pinyin"}
     for number, obj in rows:
-        check_common_keys(name, number, obj, required, optional, violations)
+        check_common_keys(name, number, obj, required, optional | RETIRED_KEYS, violations)
+        check_retired_keys(name, number, obj, violations)
         check_word(name, number, obj, violations)
         check_unsure(name, number, obj, violations)
-        check_hsk(name, number, obj, violations)
+        check_hsk_level(name, number, obj, "hsk2", HSK2_MIN_LEVEL, HSK2_MAX_LEVEL, violations)
+        check_hsk_level(name, number, obj, "hsk3", HSK3_MIN_LEVEL, HSK3_MAX_LEVEL, violations)
         word = obj.get("word")
 
         if "pinyin" in obj:
@@ -325,17 +432,40 @@ def validate_zh_ja_glosses(path, rows, violations) -> Counter:
         if "qa" in obj and qa not in QA_VALUES:
             violations.append(Violation(name, number, word, "bad-qa", f"qa が想定外の値: {qa!r}"))
 
+        # 任意の配列キー。
+        if "trad" in obj:
+            check_string_array(name, number, word, "trad", obj["trad"], violations)
+        if "pos" in obj:
+            check_string_array(name, number, word, "pos", obj["pos"], violations, allowed=POS_VALUES)
+        if "reading_pos" in obj:
+            check_string_array(name, number, word, "reading_pos", obj["reading_pos"], violations,
+                               allowed=READING_POS_VALUES)
+            # README の復元規則（`reading_pos` が無い行は語の `pos` と同じ）が成り立つには、
+            # `reading_pos` を持つ行が `pos` も持っていなければならない。
+            if "pos" not in obj:
+                violations.append(
+                    Violation(name, number, word, "reading-pos-without-pos",
+                              "reading_pos があるのに pos が無い（復元規則が成り立たない）")
+                )
+        if "alt_pinyin" in obj and check_string_array(name, number, word, "alt_pinyin",
+                                                      obj["alt_pinyin"], violations):
+            for index, value in enumerate(obj["alt_pinyin"]):
+                check_pinyin(name, number, word, value, violations, field=f"alt_pinyin[{index}]")
+
         gloss = obj.get("gloss")
         unsure = obj.get("unsure") is True
         if not isinstance(gloss, list):
             violations.append(Violation(name, number, word, "bad-type", f"gloss が配列でない: {gloss!r}"))
             continue
+        seen_gloss = set()
         for item in gloss:
             check_text(name, number, word, "gloss", item, violations, language="ja")
+            if isinstance(item, str):
+                if item in seen_gloss:
+                    violations.append(Violation(name, number, word, "duplicate-item", f"gloss に重複 {item!r}"))
+                seen_gloss.add(item)
         if not gloss and not unsure:
             violations.append(Violation(name, number, word, "empty-without-unsure", "gloss が空なのに unsure が無い"))
-        if len(gloss) > MAX_ITEMS:
-            violations.append(Violation(name, number, word, "too-many-items", f"gloss が {len(gloss)} 件（上限 {MAX_ITEMS}）"))
 
         # 区分は排他。合計が行数に一致する。
         if "pinyin" not in obj:
@@ -348,65 +478,16 @@ def validate_zh_ja_glosses(path, rows, violations) -> Counter:
             counts["通常"] += 1
         counts["_qa:" + str(qa)] += 1
         # 属性（区分をまたぐ数え方）。合計には足さない。
-        # HSK 語も `unsure` を持ちうるので、排他の区分には入れない。
-        if "hsk" in obj:
-            counts["_属性:hsk有り"] += 1
-            if isinstance(obj["hsk"], int) and not isinstance(obj["hsk"], bool):
-                counts["_属性:hsk %d級" % obj["hsk"]] += 1
-    check_duplicate_words(name, rows, violations)
-    return counts
-
-
-def validate_polyphonic(path, rows, violations) -> Counter:
-    name = "zh-ja/polyphonic.jsonl"
-    counts: Counter = Counter()
-    for number, obj in rows:
-        check_common_keys(name, number, obj, {"word", "senses"}, {"unsure"}, violations)
-        check_word(name, number, obj, violations)
-        check_unsure(name, number, obj, violations)
-        word = obj.get("word")
-
-        senses = obj.get("senses")
-        unsure = obj.get("unsure") is True
-        if not isinstance(senses, list):
-            violations.append(Violation(name, number, word, "bad-type", f"senses が配列でない: {senses!r}"))
-            continue
-        for index, sense in enumerate(senses):
-            if not isinstance(sense, dict):
-                violations.append(Violation(name, number, word, "bad-type", f"senses[{index}] がオブジェクトでない: {sense!r}"))
-                continue
-            extra = set(sense) - {"pinyin", "gloss"}
-            for key in sorted(extra):
-                violations.append(
-                    Violation(name, number, word, "unknown-key",
-                              f"senses[{index}] に仕様に無いキー {key!r}（値 {sense[key]!r}）")
-                )
-            if "pinyin" not in sense:
-                violations.append(Violation(name, number, word, "missing-key", f"senses[{index}] に pinyin が無い"))
-            else:
-                check_pinyin(name, number, word, sense["pinyin"], violations, field=f"senses[{index}].pinyin")
-            sense_gloss = sense.get("gloss")
-            if not isinstance(sense_gloss, list):
-                violations.append(Violation(name, number, word, "bad-type", f"senses[{index}].gloss が配列でない: {sense_gloss!r}"))
-                continue
-            if not sense_gloss:
-                violations.append(Violation(name, number, word, "empty-sense-gloss", f"senses[{index}].gloss が空"))
-            for item in sense_gloss:
-                check_text(name, number, word, f"senses[{index}].gloss", item, violations, language="ja")
-
-        if not senses and not unsure:
-            violations.append(Violation(name, number, word, "empty-without-unsure", "senses が空なのに unsure が無い"))
-        if len(senses) > MAX_ITEMS:
-            violations.append(Violation(name, number, word, "too-many-items", f"senses が {len(senses)} 件（上限 {MAX_ITEMS}）"))
-        if senses:
-            counts["senses非空"] += 1
-            counts["_読み数:%d" % len(senses)] += 1
-        else:
-            counts["unsure・senses空"] += 1
-        # 属性（区分をまたぐ数え方）。合計には足さない。
-        if isinstance(senses, list) and any(isinstance(s, dict) and "unsure" in s for s in senses):
-            counts["_属性:入れ子のunsure"] += 1
-    check_duplicate_words(name, rows, violations)
+        for key in ("hsk2", "hsk3", "trad", "pos", "reading_pos", "alt_pinyin"):
+            if key in obj:
+                counts["_属性:" + key] += 1
+        for key, low, high in (("hsk2", HSK2_MIN_LEVEL, HSK2_MAX_LEVEL),
+                               ("hsk3", HSK3_MIN_LEVEL, HSK3_MAX_LEVEL)):
+            level = obj.get(key)
+            if isinstance(level, int) and not isinstance(level, bool) and low <= level <= high:
+                counts["_%s %d級" % (key, level)] += 1
+    check_duplicate_word_pinyin(name, rows, violations)
+    check_word_attributes(name, rows, violations)
     return counts
 
 
@@ -452,9 +533,6 @@ def validate_ja_zh_glosses(path, rows, violations) -> Counter:
 
         if not candidates and not unsure:
             violations.append(Violation(name, number, word, "empty-without-unsure", "zh が空なのに unsure が無い"))
-        if len(candidates) > MAX_ITEMS:
-            violations.append(Violation(name, number, word, "too-many-items", f"zh が {len(candidates)} 件（上限 {MAX_ITEMS}）"))
-
         # 区分は排他。合計が行数に一致する。
         if "unsure" in obj and obj["unsure"] is False:
             counts["unsure:false（明示的な偽）"] += 1
@@ -478,9 +556,10 @@ def validate_ja_zh_glosses(path, rows, violations) -> Counter:
 
 FILES = (
     ("zh-ja/glosses.jsonl", validate_zh_ja_glosses),
-    ("zh-ja/polyphonic.jsonl", validate_polyphonic),
     ("ja-zh/glosses.jsonl", validate_ja_zh_glosses),
 )
+
+MANIFEST = "manifest.json"
 
 
 def main(argv=None) -> int:
@@ -493,6 +572,7 @@ def main(argv=None) -> int:
     violations: list[Violation] = []
     total_lines = 0
     summary = []
+    line_counts = {}
 
     for relative, validate in FILES:
         path = args.data / relative
@@ -502,7 +582,47 @@ def main(argv=None) -> int:
         rows = read_jsonl(path, violations, relative)
         counts = validate(path, rows, violations)
         total_lines += len(rows)
+        line_counts[relative] = len(rows)
         summary.append((relative, len(rows), counts))
+
+    # 退役したファイルが残っていないか。
+    retired = args.data / "zh-ja" / "polyphonic.jsonl"
+    if retired.exists():
+        violations.append(Violation(MANIFEST, 0, None, "retired-file",
+                                    "zh-ja/polyphonic.jsonl は schema 2 で廃止した。残っている"))
+
+    # manifest と実ファイルの突き合わせ。
+    manifest_path = args.data / MANIFEST
+    if not manifest_path.exists():
+        violations.append(Violation(MANIFEST, 0, None, "missing-manifest", f"{manifest_path} が無い"))
+    else:
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            manifest = None
+            violations.append(Violation(MANIFEST, 0, None, "broken-json", str(exc)))
+        if manifest is not None:
+            if manifest.get("schema_version") != SCHEMA_VERSION:
+                violations.append(Violation(MANIFEST, 0, None, "bad-schema-version",
+                                            f"schema_version が {SCHEMA_VERSION} でない: {manifest.get('schema_version')!r}"))
+            files = manifest.get("files")
+            if not isinstance(files, dict):
+                violations.append(Violation(MANIFEST, 0, None, "bad-type", f"files がオブジェクトでない: {files!r}"))
+            else:
+                for relative, actual in line_counts.items():
+                    entry = files.get(relative)
+                    # 値がオブジェクトでない manifest を手で書かれても落ちないようにする。
+                    if entry is not None and not isinstance(entry, dict):
+                        violations.append(Violation(MANIFEST, 0, None, "bad-type",
+                                                    f"files[{relative!r}] がオブジェクトでない: {entry!r}"))
+                        continue
+                    recorded = (entry or {}).get("lines")
+                    if recorded != actual:
+                        violations.append(Violation(MANIFEST, 0, None, "line-count-mismatch",
+                                                    f"{relative}: manifest {recorded!r} / 実ファイル {actual}"))
+                for key in sorted(set(files) - set(line_counts)):
+                    violations.append(Violation(MANIFEST, 0, None, "unknown-file",
+                                                f"manifest に実在しないファイル {key!r}"))
 
     for relative, line_count, counts in summary:
         print(f"## {relative}（{line_count:,}行）")
