@@ -241,16 +241,22 @@ def main(argv=None) -> int:
         if len(senses) < 2:
             continue
         known = {norm(word, r["pinyin"]) for r in rows_by_word[word]}
-        seen = []
+        # D9: 同じ読みの sense が複数あるときは、入力順を保って1行へ併合する。
+        # 2件目を捨てると訳が失われる（現データにこの経路は無いが、規則として実装する）。
+        made = {}
         for sense in senses:
             key = norm(word, sense["pinyin"])
-            if key in known or key in seen:
+            if key in known:
                 continue
-            seen.append(key)
+            if key in made:
+                row = made[key]
+                row["gloss"] = dedup(row["gloss"] + list(sense["gloss"]))
+                continue
             new = {"word": word, "pinyin": sense["pinyin"],
                    "gloss": dedup(sense["gloss"]), "qa": "unchecked"}
             new.update(attributes.get(word, {}))
             rows_by_word[word].append(new)
+            made[key] = new
             added_poly += 1
 
     # (c) polyphonic にしか無い語のうち訳を持つもの（D8）

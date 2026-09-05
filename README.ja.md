@@ -266,7 +266,7 @@ JMdict は [Electronic Dictionary Research and Development Group (EDRDG)](https:
 
 **HSKの語彙（`hsk2`・`hsk3`・`trad`・`pos`・`alt_pinyin`）** — [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)（MITライセンス、commit `7ac65bf1a6387d35f1ade478906172a19311c7f9`）から採りました。この資料からは、**版ごとの級・見出し語・ピンイン・繁体字の綴り・品詞の候補**を採っています。2つの版（HSK 2.0 と HSK 3.0）を持つのもこの資料です。
 日本語訳は、そこに含まれる**英語の語義を使わず**、独立に生成しました。
-多音字52語については、読みと語義の対応を人が確認しています（`qa: human_reviewed`）。
+多音字52語については、読みと語義の対応を人が確認しています（`qa: human_reviewed`）。この確認と、短い日本語訳の作成は、このプロジェクトの中間ファイル `project-gloss-overrides`（訳）と `project-sense-overrides`（読みと語義の対応）で行いました。どちらもこのリポジトリには含まれません。
 
 MITライセンスは著作権表示の保持を求めます。原本の表示をそのまま載せます。
 
@@ -314,7 +314,7 @@ SOFTWARE.
 
 1行が (見出し語, 読み) を表すようにし、読み別の語義を集めた `polyphonic.jsonl` を廃止して中日の `glosses.jsonl` へ統合しました（95,463行 → 96,326行）。
 
-- **`polyphonic.jsonl` を廃止しました。**読みが2つ以上ある語の追加の読み784行と、このファイルにしか無かった15語17行を取り込みました。残りは既存の行と同じ読みなので捨てています
+- **`polyphonic.jsonl` を廃止しました。**読みが2つ以上ある語の追加の読み784行と、このファイルにしか無かった15語17行を取り込みました。残りは捨てています——既存の行と同じ読みの4,038件のほか、読みが1つだけで既存の行と読みが違う402件と、訳を持たない34語です
 - HSKの多音字52語について、読み別の語義62行を足しました（`qa: human_reviewed`）
 - **`hsk` を `hsk2` と `hsk3` に分けました。**以前は「3.0を優先し、無ければ2.0」の合成値だったため、どちらの版の級かがデータから判別できませんでした
 - `trad`・`pos`・`reading_pos`・`alt_pinyin` を新設しました

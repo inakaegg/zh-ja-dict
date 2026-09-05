@@ -596,12 +596,28 @@ def main(argv=None) -> int:
     if not manifest_path.exists():
         violations.append(Violation(MANIFEST, 0, None, "missing-manifest", f"{manifest_path} が無い"))
     else:
+        # JSON の `null` は None になる。読めなかった場合と同じ値なので、
+        # 「読めなかった」を None で表すと null を書かれたときに素通りする。
+        # 別の目印を使って区別する。
+        unreadable = object()
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            manifest = None
+            manifest = unreadable
             violations.append(Violation(MANIFEST, 0, None, "broken-json", str(exc)))
-        if manifest is not None:
+        if manifest is not unreadable and not isinstance(manifest, dict):
+            violations.append(Violation(MANIFEST, 0, None, "bad-type",
+                                        f"manifest がオブジェクトでない: {manifest!r}"))
+            manifest = unreadable
+        if manifest is not unreadable:
+            for key in ("schema_version", "generated", "files"):
+                if key not in manifest:
+                    violations.append(Violation(MANIFEST, 0, None, "missing-key",
+                                                f"manifest に必須キー {key!r} が無い"))
+            generated = manifest.get("generated")
+            if "generated" in manifest and not (isinstance(generated, str) and generated):
+                violations.append(Violation(MANIFEST, 0, None, "bad-type",
+                                            f"generated が空でない文字列でない: {generated!r}"))
             if manifest.get("schema_version") != SCHEMA_VERSION:
                 violations.append(Violation(MANIFEST, 0, None, "bad-schema-version",
                                             f"schema_version が {SCHEMA_VERSION} でない: {manifest.get('schema_version')!r}"))
@@ -616,7 +632,15 @@ def main(argv=None) -> int:
                         violations.append(Violation(MANIFEST, 0, None, "bad-type",
                                                     f"files[{relative!r}] がオブジェクトでない: {entry!r}"))
                         continue
-                    recorded = (entry or {}).get("lines")
+                    if entry is None:
+                        violations.append(Violation(MANIFEST, 0, None, "missing-key",
+                                                    f"manifest に {relative!r} の項目が無い"))
+                        continue
+                    if "lines" not in entry:
+                        violations.append(Violation(MANIFEST, 0, None, "missing-key",
+                                                    f"files[{relative!r}] に lines が無い"))
+                        continue
+                    recorded = entry["lines"]
                     if recorded != actual:
                         violations.append(Violation(MANIFEST, 0, None, "line-count-mismatch",
                                                     f"{relative}: manifest {recorded!r} / 実ファイル {actual}"))

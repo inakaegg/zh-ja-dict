@@ -111,6 +111,26 @@ class OrderTest(unittest.TestCase):
                          [("甲", "jiǎ"), ("乙", "yǐ"), ("丙", "bǐng")])
         self.assertEqual(rows[-1]["qa"], "unchecked")
 
+    def test_同じ新規読みのsensesは入力順で併合する(self):
+        # D9。2件目を捨てると訳が失われる。現データにこの経路は無い。
+        rows = build(
+            [{"word": "甲", "pinyin": "jiǎ", "gloss": ["こう"], "qa": "llm_ok"}],
+            [{"word": "甲", "senses": [{"pinyin": "jiǎ", "gloss": ["こう"]},
+                                       {"pinyin": "jià", "gloss": ["よろい"]},
+                                       {"pinyin": "jià", "gloss": ["かぶと"]}]}],
+            [])
+        self.assertEqual([(r["pinyin"], r["gloss"]) for r in rows],
+                         [("jiǎ", ["こう"]), ("jià", ["よろい", "かぶと"])])
+
+    def test_併合しても重複は落とす(self):
+        rows = build(
+            [{"word": "甲", "pinyin": "jiǎ", "gloss": ["こう"], "qa": "llm_ok"}],
+            [{"word": "甲", "senses": [{"pinyin": "jiǎ", "gloss": ["こう"]},
+                                       {"pinyin": "jià", "gloss": ["よろい"]},
+                                       {"pinyin": "jià", "gloss": ["よろい", "かぶと"]}]}],
+            [])
+        self.assertEqual(rows[1]["gloss"], ["よろい", "かぶと"])
+
     def test_訳を持たない語は取り込まない(self):
         rows = build(
             [{"word": "甲", "pinyin": "jiǎ", "gloss": ["こう"], "qa": "llm_ok"}],

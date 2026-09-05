@@ -270,7 +270,7 @@ The commercial dictionaries were **used only to match headwords; their definitio
 
 **HSK vocabulary (`hsk2`, `hsk3`, `trad`, `pos`, `alt_pinyin`)** — Taken from [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary) (MIT license, commit `7ac65bf1a6387d35f1ade478906172a19311c7f9`). From it we took **per-version levels, headwords, pinyin, traditional spellings and candidate parts of speech**. The two versions (HSK 2.0 and HSK 3.0) also come from this source.
 The Japanese glosses were generated independently, **without using the English definitions** it contains.
-For 52 polyphonic words, a person confirmed the pairing of reading and sense (`qa: human_reviewed`).
+For 52 polyphonic words, a person confirmed the pairing of reading and sense (`qa: human_reviewed`). That review, and the writing of the short Japanese glosses, were done in this project's intermediate files `project-gloss-overrides` (glosses) and `project-sense-overrides` (reading and sense pairings). Neither is part of this repository.
 
 The MIT license requires the copyright notice to be retained. The original notice is reproduced here.
 
@@ -318,7 +318,7 @@ SOFTWARE.
 
 Each line now represents a (headword, reading) pair. The per-reading sense file `polyphonic.jsonl` was retired and merged into the zh→ja `glosses.jsonl` (95,463 → 96,326 lines).
 
-- **`polyphonic.jsonl` was retired.** 784 additional readings of words with two or more readings, and 17 lines of the 15 words that existed only in that file, were taken in. The rest had the same reading as an existing line and were dropped
+- **`polyphonic.jsonl` was retired.** 784 additional readings of words with two or more readings, and 17 lines of the 15 words that existed only in that file, were taken in. The rest were dropped: 4,038 senses with the same reading as an existing line, 402 single-reading senses whose reading differs, and 34 words without a gloss
 - 62 per-reading sense lines were added for 52 polyphonic HSK words (`qa: human_reviewed`)
 - **`hsk` was split into `hsk2` and `hsk3`.** Previously it was a combined value ("prefer 3.0, else 2.0"), so the data could not tell which version a level belonged to
 - `trad`, `pos`, `reading_pos` and `alt_pinyin` were added
