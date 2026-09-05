@@ -1,44 +1,46 @@
 # zh-ja-dict
 
-中国語と日本語の対訳データ集です。学習アプリで単語の訳を表示することを目的に作りました。訳文はすべて LLM で生成しています。
+Japanese version: [README.ja.md](README.ja.md). **The Japanese text is the source of truth; this English version follows it.** / 日本語版が正本です。英語版はそれに追従します。
 
-- 2ファイル・136,326行・約14MB。すべて JSON Lines（UTF-8、LF）
-- 方向は中日（中国語→日本語）と日中（日本語→中国語）の2つ
-- **中日は1行が「語と読みの組」です。**読みが複数ある語は複数行になります
-- 検品の度合いは行ごとに違います。`qa` の欄で見分けられます
-- **[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)** で提供します（[ライセンス](#ライセンス)）
+A Chinese–Japanese bilingual gloss dataset, built so that a language-learning app can show a short translation for each word. All glosses were generated with an LLM.
 
-## 収録データ
+- 2 files, 136,326 lines, about 14 MB. All JSON Lines (UTF-8, LF)
+- Two directions: Chinese→Japanese and Japanese→Chinese
+- **In the Chinese→Japanese file, one line is one (headword, reading) pair.** A headword with several readings has several lines
+- Lines have been checked to different degrees. The `qa` field tells them apart
+- Licensed under **[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)** (see [License](#license))
 
-| ファイル | 方向 | 行数 | 語数 | 内容 |
+## Contents
+
+| File | Direction | Lines | Words | Content |
 |---|---|---|---|---|
-| `data/zh-ja/glosses.jsonl` | 中日 | 96,326 | 95,478 | 簡潔な日本語訳（ピンイン付き）。うち11,470語はHSKの級を持つ |
-| `data/ja-zh/glosses.jsonl` | 日中 | 40,000 | 40,000 | 中国語訳（ピンイン付き） |
+| `data/zh-ja/glosses.jsonl` | zh→ja | 96,326 | 95,478 | Short Japanese glosses with pinyin. 11,470 of the words carry an HSK level |
+| `data/ja-zh/glosses.jsonl` | ja→zh | 40,000 | 40,000 | Chinese translations with pinyin |
 
-このほかに `data/manifest.json` があります（[manifest.json](#manifestjson)）。
+There is also `data/manifest.json` (see [manifest.json](#manifestjson)).
 
-中日では **(見出し語, 読み) の組**が重複しません。読みが複数ある語は複数行に分かれ、791語が2行以上を持ちます（最大4行）。日中は1語1行のままです。ファイルをまたぐ対応関係はありません。
+In the zh→ja file, **(headword, reading) pairs are unique**. A word with several readings is split over several lines; 791 words have two or more lines (at most four). The ja→zh file stays at one line per word. There is no correspondence between the two files.
 
-## 形式
+## Format
 
 ### data/zh-ja/glosses.jsonl
 
-| キー | 型 | 必須 | 意味 |
+| Key | Type | Required | Meaning |
 |---|---|---|---|
-| `word` | string | 必須 | 見出し語。大半は簡体字ですが、繁体字の見出し語も含みます（`雙`・`時間`・`經過` など） |
-| `pinyin` | string | 必須 | この行の読み |
-| `gloss` | string の配列 | 必須 | 日本語訳。件数の上限はありません。0件のときは `unsure: true` が付きます |
-| `qa` | string | 必須 | 検品の区分。`machine_backed` / `llm_ok` / `llm_fixed` / `human_reviewed` / `unchecked` のどれか |
-| `unsure` | true | 任意 | 訳の確からしさに不安がある印。[unsure の意味](#unsure-の意味)を参照 |
-| `hsk2` | 整数 | 任意 | HSK 2.0 の級（1〜6）。[HSKの級](#hskの級)を参照 |
-| `hsk3` | 整数 | 任意 | HSK 3.0 の級（1〜7） |
-| `trad` | string の配列 | 任意 | 繁体字の綴り。見出し語と異なるものだけ |
-| `pos` | string の配列 | 任意 | 品詞。[出どころ](#出どころ)の資料の略号をそのまま使います（`n`・`v`・`u` など。略号の意味はその資料を見てください） |
-| `reading_pos` | string の配列 | 任意 | **この読みの**品詞。語全体の `pos` と異なるときだけ置きます |
-| `alt_pinyin` | string の配列 | 任意 | [出どころ](#出どころ)の資料にあった別の読み。語義が対応づいていません |
+| `word` | string | yes | Headword. Mostly simplified characters, but some traditional headwords are included (`雙`, `時間`, `經過`, …) |
+| `pinyin` | string | yes | The reading of this line |
+| `gloss` | array of strings | yes | Japanese glosses. No upper limit on the count. When empty, `unsure: true` is set |
+| `qa` | string | yes | Check category: one of `machine_backed` / `llm_ok` / `llm_fixed` / `human_reviewed` / `unchecked` |
+| `unsure` | true | optional | Marks a gloss whose reliability is in doubt. See [What unsure means](#what-unsure-means) |
+| `hsk2` | integer | optional | HSK 2.0 level (1–6). See [HSK levels](#hsk-levels) |
+| `hsk3` | integer | optional | HSK 3.0 level (1–7) |
+| `trad` | array of strings | optional | Traditional spellings, only those that differ from the headword |
+| `pos` | array of strings | optional | Parts of speech, using the abbreviations of the [source](#sources) as they are (`n`, `v`, `u`, …; see that source for their meaning) |
+| `reading_pos` | array of strings | optional | Parts of speech **of this reading**. Present only when it differs from the word-level `pos` |
+| `alt_pinyin` | array of strings | optional | Other readings found in the [source](#sources). They are not tied to any gloss |
 
-`hsk2`・`hsk3`・`trad`・`pos`・`alt_pinyin` は**語の属性**で、同じ語のすべての行が同じ値を持ちます。任意キーのうち `reading_pos` だけが**行の属性**で、行ごとに値が違います。
-`reading_pos` は `pos` を持つ語にだけ現れます（`pos` が無くて `reading_pos` だけがある行はありません）。
+`hsk2`, `hsk3`, `trad`, `pos` and `alt_pinyin` are **word attributes**: every line of the same word carries the same value. Among the optional keys, only `reading_pos` is a **line attribute** whose value differs per line.
+`reading_pos` appears only on words that have `pos` (there is no line with `reading_pos` but without `pos`).
 
 ```json
 {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"}
@@ -48,17 +50,17 @@
 {"word": "着", "pinyin": "zháo", "gloss": ["触れる"], "qa": "human_reviewed", "hsk2": 2, "hsk3": 1, "trad": ["著"], "pos": ["u", "v", "n", "q"], "reading_pos": ["v"]}
 ```
 
-行の内訳は次の3つで、合計が行数に一致します。
+Lines fall into three groups, and the counts add up to the line total.
 
-| 区分 | 件数 |
+| Group | Count |
 |---|---|
-| `unsure` なし | 96,104 |
-| `unsure: true`、`gloss` は1件以上 | 219 |
-| `unsure: true`、`gloss` は空配列 | 3 |
+| no `unsure` | 96,104 |
+| `unsure: true`, `gloss` has one or more items | 219 |
+| `unsure: true`, `gloss` is empty | 3 |
 
-任意キーを持つ行と語の数は次のとおりです。
+Lines and words that carry optional keys:
 
-| キー | 行 | 語 |
+| Key | Lines | Words |
 |---|---|---|
 | `hsk2` | 5,033 | 4,991 |
 | `hsk3` | 11,030 | 10,969 |
@@ -67,55 +69,55 @@
 | `reading_pos` | 98 | 48 |
 | `alt_pinyin` | 344 | 334 |
 
-### qa の意味
+### What qa means
 
-| 値 | 件数 | 意味 |
+| Value | Count | Meaning |
 |---|---|---|
-| `machine_backed` | 66,815 | 既存の辞書資源と突き合わせ、裏付けが取れた |
-| `llm_ok` | 27,792 | 照合で裏付けが取れず、LLMに読ませて妥当と判断した |
-| `llm_fixed` | 856 | 同上で、LLMが訳を直した |
-| `human_reviewed` | 62 | 多音字の読みと語義の対応を人が確認した。**訳文の文面は2段階の検品を通していません**（[作り方と検品](#作り方と検品)） |
-| `unchecked` | 801 | **検品を通していません**。読み別の語義を集めたファイルから取り込んだ行です |
+| `machine_backed` | 66,815 | Cross-checked against existing dictionary resources and confirmed |
+| `llm_ok` | 27,792 | Not confirmed by the cross-check; an LLM read it and judged it acceptable |
+| `llm_fixed` | 856 | Same as above, but the LLM corrected the gloss |
+| `human_reviewed` | 62 | A person confirmed the pairing of reading and sense for polyphonic words. **The wording of the gloss has not gone through the two-step check** (see [How it was made and checked](#how-it-was-made-and-checked)) |
+| `unchecked` | 801 | **Not checked.** Lines imported from a file of per-reading senses |
 
-**`unchecked` の801行は、ほかの行と同じ検品を受けていません。**取り込み元のファイル（旧 `polyphonic.jsonl`）は生成したまま検品していないものでした。
+**The 801 `unchecked` lines have not received the same check as the other lines.** The file they came from (the former `polyphonic.jsonl`) was generated and never checked.
 
-### reading_pos の読み方
+### How to read reading_pos
 
-`reading_pos` は、その読みの品詞が語全体の `pos` と**異なるときだけ**置きます。
+`reading_pos` is present **only when** the part of speech of that reading differs from the word-level `pos`.
 
-- `reading_pos` が無く `pos` がある行は、**その読みの品詞は語の `pos` と同じ**です
-- 例: `着` の `pos` は `["u","v","n","q"]`（語としてまとめた品詞）ですが、`zhe` の行の `reading_pos` は `["u"]`、`zháo` の行の `reading_pos` は `["v"]` です
-- 値は出どころの資料の略号ですが、`interjection` という英単語が1つだけ混じります（`哦`・`嗯`）。資料の表記をそのまま残しています
+- A line that has `pos` but no `reading_pos` means **the part of speech of that reading is the same as the word's `pos`**
+- Example: `着` has `pos` `["u","v","n","q"]` (the parts of speech pooled over the word), while the `zhe` line has `reading_pos` `["u"]` and the `zháo` line has `reading_pos` `["v"]`
+- Values are the source's abbreviations, except that one English word, `interjection`, occurs (`哦`, `嗯`). The source's notation is kept as it is
 
-### 固有名詞の読みを別行に残す語
+### Words whose proper-noun reading is kept as a separate line
 
-ピンインの大文字は固有名詞の印です。**(見出し語, 読み) の組が重複しないかを見るとき、大小文字は区別しません**。同じ読みを大文字と小文字で書き分けているだけの語では、統合前から `glosses.jsonl` にあった行の綴りを残しました（`俞` は `Yú` を残し、`yú` は落としています）。
+An uppercase initial in pinyin marks a proper noun. **When checking that (headword, reading) pairs are unique, letter case is ignored.** Where a word merely had the same reading spelled in upper and lower case, the spelling of the line that already existed in `glosses.jsonl` before the merge was kept (`俞` keeps `Yú`, and `yú` was dropped).
 
-ただし**次の2語は別の語なので、大小文字を区別して別の行に残しています**。
+**The following two words are different words, so both lines are kept, distinguished by case.**
 
-| 語 | 行1 | 行2 |
+| Word | Line 1 | Line 2 |
 |---|---|---|
-| `包头` | `Bāotóu` = 包頭（地名） | `bāotóu` = 頭巾・つま先金具 |
-| `酂` | `Zàn` = 酂（地名） | `zàn` = 古代の里の単位 |
+| `包头` | `Bāotóu` = Baotou (place name) | `bāotóu` = headscarf; (shoe) toe cap |
+| `酂` | `Zàn` = Zan (place name) | `zàn` = an ancient unit of villages |
 
-まとめると、**大小文字だけが違う組は原則1行にまとめ、この2語だけ両方を残しました**。そのため、大小文字を区別して見ればファイル全体で組は一意で、区別せずに見るとこの2語だけが重なります（実測でもこのとおりです）。検証スクリプトは、この2語を例外として扱ったうえで組の重複を見ます。
+In short: **pairs that differ only in case are merged into one line as a rule, and only these two words keep both.** Viewed case-sensitively, every pair in the file is unique; viewed case-insensitively, only these two words overlap (this matches what was measured). The validation script treats these two words as exceptions and then checks for duplicate pairs.
 
-### 並び順
+### Ordering
 
-同じ語の行は必ず隣り合います。読みが複数ある語では、2行目以降がその語の先頭の行のすぐ後ろに続きます。
+Lines of the same word are always adjacent. For a word with several readings, the second and later lines follow immediately after the word's first line.
 
-語の並びは次のとおりです。先頭の83,993語は分かち書き辞書（cppjieba）の頻度の高い順、そのあとの11,470語がHSKの語彙で**級の昇順**（同じ級の中は元データの並び）です。末尾の15語は、廃止した `polyphonic.jsonl` にしか無かった語です。
-頻度の数値そのものは収録していないため、行番号を頻度の代わりに使うことはできません。
+Words are ordered as follows. The first 83,993 words are in descending frequency order of the word-segmentation dictionary (cppjieba); the following 11,470 words are HSK vocabulary in **ascending level order** (within a level, in the order of the source data). The last 15 words existed only in the retired `polyphonic.jsonl`.
+The frequency figures themselves are not included, so a line number cannot be used in place of frequency.
 
 ### data/ja-zh/glosses.jsonl
 
-| キー | 型 | 必須 | 意味 |
+| Key | Type | Required | Meaning |
 |---|---|---|---|
-| `word` | string | 必須 | 見出し語（日本語） |
-| `zh` | オブジェクトの配列 | 必須 | 中国語訳の候補。件数の上限はありません。要素のキーは `s` と `pinyin` の2つだけ |
-| `unsure` | true | 任意 | 訳の確からしさに不安がある印 |
+| `word` | string | yes | Headword (Japanese) |
+| `zh` | array of objects | yes | Candidate Chinese translations. No upper limit on the count. Each element has exactly two keys, `s` and `pinyin` |
+| `unsure` | true | optional | Marks a translation whose reliability is in doubt |
 
-`zh` の要素は、`s` が中国語の表記、`pinyin` がその読みです。表記は簡体字が基本ですが、中国語でそのまま使われる借用語（`App`・`cosplay`・`AA制` など）や、日本語の文法用語のかな（`サ行不规则活用` など）も含みます。候補は主要なものから順に並べています。
+In each element of `zh`, `s` is the Chinese spelling and `pinyin` its reading. Spellings are simplified characters as a rule, but loanwords used as-is in Chinese (`App`, `cosplay`, `AA制`, …) and kana in Japanese grammar terms (`サ行不规则活用`, …) also appear. Candidates are listed with the main one first.
 
 ```json
 {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}, {"s": "清楚", "pinyin": "qīngchu"}]}
@@ -123,19 +125,19 @@
 {"word": "初場所", "zh": [{"s": "新年场所", "pinyin": "xīnnián chǎngsuǒ"}], "unsure": true}
 ```
 
-| 区分 | 件数 |
+| Group | Count |
 |---|---|
-| `unsure` なし | 38,565 |
-| `unsure: true`、`zh` は1件以上 | 493 |
-| `unsure: true`、`zh` は空配列 | 942 |
+| no `unsure` | 38,565 |
+| `unsure: true`, `zh` has one or more items | 493 |
+| `unsure: true`, `zh` is empty | 942 |
 
-候補の数は 0件が942語、1件が15,979語、2件が22,150語、3件が929語です。
+Candidate counts: 942 words have 0, 15,979 have 1, 22,150 have 2, and 929 have 3.
 
 ### manifest.json
 
-データの版と行数を書いた小さなファイルです。読み込む側が、想定と違う版のデータを黙って読んでしまうことを防ぎます。
+A small file that records the schema version and the line counts. It lets a reader avoid silently loading data of a version it does not expect.
 
-`schema_version` は**この文書が説明している形式の版**で、現在は 2 です。1行を「語と読みの組」にした今回の改訂で 2 になりました。
+`schema_version` is **the version of the format this document describes**, currently 2. It became 2 with the revision that made one line one (word, reading) pair.
 
 ```json
 {
@@ -148,45 +150,45 @@
 }
 ```
 
-`glosses.jsonl` だけをコピーして使う場合は manifest が手元に来ません。そのときは、廃止したキー `hsk` があるかどうかで古い形式かを判断できます。
+If you copy only `glosses.jsonl`, the manifest does not come with it. In that case, the presence of the retired key `hsk` tells you that the file is in the old format.
 
-## unsure の意味
+## What unsure means
 
-`unsure` は「**この行の訳を鵜呑みにしないでほしい**」という印です。どちらの `glosses.jsonl` でも、訳が無いことを意味しません。
+`unsure` means "**do not take the gloss on this line at face value**". In neither `glosses.jsonl` does it mean that there is no gloss.
 
-日中では、`unsure: true` の1,435行のうち493行が訳を持っています。中日でも222行のうち219行が訳を持っています。訳の有無と `unsure` は別の情報です。
+In the ja→zh file, 493 of the 1,435 `unsure: true` lines have translations. In the zh→ja file, 219 of 222 do. Whether a gloss exists and whether `unsure` is set are separate pieces of information.
 
-- `unsure` を「訳なし」と読み替えて除外すると、日中で493行、中日で219行ぶんの訳を捨てることになります
-- 逆に「訳が空かどうか」で判定したい場合は、`gloss` や `zh` の長さを直接見てください
-- `unsure` は立てるときだけ `true` で書きます。`false` を明示した行はありません
+- Reading `unsure` as "no gloss" and dropping those lines throws away 493 translations (ja→zh) and 219 (zh→ja)
+- If you want to test for an empty gloss, look at the length of `gloss` or `zh` directly
+- `unsure` is written only as `true` when set. No line spells out `false`
 
-読み込む側では、`unsure` の行を読み取りの段階で捨てないことを勧めます。除外するかどうかは、表示のときに判断してください。
+Readers are advised not to drop `unsure` lines at load time. Decide whether to hide them at display time.
 
-## HSKの級
+## HSK levels
 
-11,470語がHSKの級を持ちます。この11,470語は、分かち書き辞書（cppjieba）から選んだ83,993語と**1語も重なりません**。中日の見出し語を選ぶときにHSKの語彙を除いていたため、統合しても重複が生じませんでした。
+11,470 words carry an HSK level. These 11,470 words **do not overlap with any** of the 83,993 words chosen from the segmentation dictionary (cppjieba): HSK vocabulary was excluded when the zh→ja headwords were chosen, so merging produced no duplicates.
 
-HSKには2.0（6級まで）と3.0（7級まで）の2つの版があります。**版ごとに別のキーへ入れています。**
+HSK has two versions, 2.0 (up to level 6) and 3.0 (up to level 7). **Each version is stored under its own key.**
 
-| キー | 語数 | 級の範囲 |
+| Key | Words | Level range |
 |---|---|---|
-| `hsk2` | 4,991 | 1〜6 |
-| `hsk3` | 10,969 | 1〜7 |
+| `hsk2` | 4,991 | 1–6 |
+| `hsk3` | 10,969 | 1–7 |
 
-両方を持つ語が4,490、`hsk2` だけが501、`hsk3` だけが6,479です。**両方を持つ4,490語のうち3,673語で級が違います。**版をまたいで難易度を比べるときは、この点を承知して使ってください。
+4,490 words have both, 501 have only `hsk2`, and 6,479 have only `hsk3`. **Of the 4,490 words with both, 3,673 have different levels in the two versions.** Keep this in mind when comparing difficulty across versions.
 
-級ごとの語数は次のとおりです。
+Words per level:
 
-| 級 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+| Level | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
 | `hsk2` | 150 | 147 | 298 | 598 | 1,298 | 2,500 | — |
 | `hsk3` | 506 | 750 | 953 | 972 | 1,059 | 1,123 | 5,606 |
 
-「難しい語を選ぶ」ような使い方をするなら、どちらの版を使うか決めてください。両方を見て易しいほうを採る、3.0を優先して無ければ2.0を使う、といった選び方はどれも成り立ちます。
+If you use the levels to pick "hard words", decide which version to use. Taking the easier of the two, or preferring 3.0 and falling back to 2.0, are both workable choices.
 
-## データを検証する
+## Validating the data
 
-`tools/validate_data.py` が2つのデータファイルと `manifest.json` を全件読み、形式の違反を報告します。Python 3.9以上があれば動きます。追加のインストールは要りません。
+`tools/validate_data.py` reads both data files and `manifest.json` in full and reports format violations. It runs on Python 3.9 or later with no extra installation.
 
 ```console
 $ python3 tools/validate_data.py
@@ -197,78 +199,80 @@ $ python3 tools/validate_data.py
 違反 0 件
 ```
 
-違反が1件でもあれば終了コード1で終わります。GitHub Actions（`.github/workflows/validate.yml`）が push と pull request で同じコマンドを実行します。
+The report is printed in Japanese. The last line, `違反 N 件`, is the number of violations found, and `合計` is the line total.
 
-件数だけを見たいときは `--counts` を付けます。このときは違反があっても終了コード0で終わります。
+If there is even one violation, it exits with code 1. GitHub Actions (`.github/workflows/validate.yml`) runs the same command on push and pull request.
 
-このスクリプトが調べるのは次の10点です。JSONとして読めるか。キーの構成が上の表と合っているか。任意キーの配列（`trad`・`pos`・`reading_pos`・`alt_pinyin`）が空でないか。どの配列にも重複が無いか。空文字や前後の空白が無いか。**(見出し語, 読み) の組が重複していないか**。語の属性が同じ語の行どうしで食い違っていないか。**`reading_pos` を持つ行が `pos` も持っているか**（[reading_pos の読み方](#reading_pos-の読み方)の復元規則が成り立つため）。`manifest.json` の行数が実ファイルと合っているか。そして**訳文に別の言語が紛れ込んでいないか**。
+To see only the counts, add `--counts`; it then exits with code 0 even when there are violations.
 
-訳や候補の**件数に上限はありません**。以前は3件までとしていましたが、それは生成のときの目安であって形式の制約ではなかったので、検査から外しました。
+The script checks ten things: that each line parses as JSON; that the keys match the tables above; that the optional arrays (`trad`, `pos`, `reading_pos`, `alt_pinyin`) are not empty; that no array contains duplicates; that there are no empty strings or leading/trailing spaces; **that (headword, reading) pairs are unique**; that word attributes agree across the lines of the same word; **that a line with `reading_pos` also has `pos`** (so the restoration rule in [How to read reading_pos](#how-to-read-reading_pos) holds); that the line counts in `manifest.json` match the files; and **that no other language has crept into a gloss**.
 
-最後の検査には説明が要ります。日本語も中国語も、略語・単位・固有名詞をラテン文字のまま書きます（`USBメモリ`、`X光`、`AA制`）。一方、生成の失敗で英単語がそのまま残った訳も見た目は同じです。両者を機械で見分ける方法が無いため、使ってよいラテン文字の語を `tools/allowlist-latin.txt` に並べ、それ以外を違反として報告します。中国語訳にかなを含んでよい語（日本語の文法用語）は `tools/allowlist-kana-in-chinese.txt` に置いています。
+There is **no upper limit on the number of glosses or candidates**. An earlier limit of three was a guideline for generation, not a property of the format, so it was removed from the checks.
 
-訳を足したり直したりして新しい語が必要になったら、その語がその言語で実際にそう書かれることを確かめてから、これらのファイルへ追記してください。
+The last check needs an explanation. Both Japanese and Chinese write abbreviations, units and proper nouns in Latin letters (`USBメモリ`, `X光`, `AA制`). A gloss where an English word was left behind by a failed generation looks the same. Since there is no mechanical way to tell them apart, the Latin-letter words that are allowed are listed in `tools/allowlist-latin.txt` and anything else is reported as a violation. Words that may contain kana in a Chinese translation (Japanese grammar terms) are in `tools/allowlist-kana-in-chinese.txt`.
 
-検証スクリプト自身のテストは `python3 tools/test_validate_data.py` で走ります。作り物の小さなデータを使い、実データは読みません。
+If you add or fix glosses and need a new word, confirm that the word is really written that way in that language before adding it to these files.
 
-データを組み立てる `tools/build_glosses.py` と、その自己テスト `tools/test_build_glosses.py` も同じディレクトリにあります。ただし組み立ての入力になる HSK の語彙データはこのリポジトリに含まれないため、**このリポジトリだけでは組み立てを再現できません**。
+The validation script's own tests run with `python3 tools/test_validate_data.py`. They use small synthetic data and do not read the real data.
 
-## 作り方と検品
+`tools/build_glosses.py`, which assembles the data, and its self-test `tools/test_build_glosses.py` are in the same directory. The HSK vocabulary data that the build takes as input is not part of this repository, so **the build cannot be reproduced from this repository alone**.
 
-訳文はすべて LLM（Claude Opus）で生成しました。市販辞書やOS付属辞書の語義本文は生成の入力に使っておらず、本データにも含まれません。見出し語をどう選んだかは[出どころ](#出どころ)にまとめています。
+## How it was made and checked
 
-生成に使ったスクリプトと選定元のデータは、このリポジトリに含めていません。HSKの級の元になった語彙データも同じです。**このリポジトリにあるものだけでは、データを作り直せませんし、出どころとの突き合わせも再現できません。**
+All glosses were generated with an LLM (Claude Opus). The definition text of commercial dictionaries and OS-bundled dictionaries was not used as input and is not contained in this data. How headwords were chosen is described under [Sources](#sources).
 
-中日の `glosses.jsonl` のうち **95,463行**が、生成後に2段階の検品を通っています。
+The generation scripts and the selection sources are not included in this repository, nor is the vocabulary data behind the HSK levels. **With what is in this repository alone, the data cannot be regenerated, and the cross-check against the sources cannot be reproduced.**
 
-1. **機械照合** — 既存の辞書資源と突き合わせ、裏付けが取れた語を `machine_backed` とする
-2. **LLM校閲** — 照合で裏付けが取れなかった語を LLM に読ませ、妥当なら `llm_ok`、直したら `llm_fixed` とする
+Of the zh→ja `glosses.jsonl`, **95,463 lines** went through a two-step check after generation.
 
-この95,463行は2回に分けて作りました。**どちらも同じ2段階の検品を通していますが、件数は別々です。**
+1. **Machine cross-check** — compared against existing dictionary resources; confirmed words become `machine_backed`
+2. **LLM review** — words not confirmed by the cross-check are read by an LLM; acceptable ones become `llm_ok`, corrected ones `llm_fixed`
 
-| | 行数 | `machine_backed` | `llm_ok` | `llm_fixed` |
+These 95,463 lines were produced in two batches. **Both went through the same two-step check, but the counts are separate.**
+
+| | Lines | `machine_backed` | `llm_ok` | `llm_fixed` |
 |---|---|---|---|---|
-| 先に作った分 | 83,993 | 56,368 | 26,801 | 824 |
-| あとで足したHSK分 | 11,470 | 10,447 | 991 | 32 |
-| **小計** | **95,463** | **66,815** | **27,792** | **856** |
+| First batch | 83,993 | 56,368 | 26,801 | 824 |
+| HSK batch added later | 11,470 | 10,447 | 991 | 32 |
+| **Subtotal** | **95,463** | **66,815** | **27,792** | **856** |
 
-この95,463行は、当時は1語1行でした。先に作った分では、LLM校閲の対象が28,492語で、うち867語を「語として成立しない」として除外しました。表の83,993件は除外後の数字です。
+At the time, these 95,463 lines were one line per word. In the first batch, 28,492 words went to LLM review, of which 867 were removed as "not a word"; the 83,993 in the table is the count after removal.
 
-**残る863行はこの検品を通っていません。**内訳は次のとおりです。
+**The remaining 863 lines did not go through this check.** They break down as follows.
 
-| `qa` | 件数 | 出どころ |
+| `qa` | Count | Origin |
 |---|---|---|
-| `unchecked` | 801 | 読み別の語義を集めたファイル（検品なし）から取り込んだ行 |
-| `human_reviewed` | 62 | HSKの多音字52語について、読みと語義の対応を人が確認した行 |
+| `unchecked` | 801 | Lines imported from a file of per-reading senses (never checked) |
+| `human_reviewed` | 62 | Lines for 52 polyphonic HSK words whose reading–sense pairing a person confirmed |
 
-`human_reviewed` が確認したのは**読みと語義の対応**であって、日本語訳の文面ではありません。
+What `human_reviewed` confirmed is **the pairing of reading and sense**, not the wording of the Japanese gloss.
 
-この検品には限界があります。2026年9月の点検で、**中日の `glosses.jsonl` から、英語やロシア語の単語が日本語訳に食い込んだ行が17件見つかりました**（`operation開始`、`материал材積` など）。廃止した `polyphonic.jsonl` にも同種の混入が7件ありました。いずれも[修正履歴](#修正履歴)のとおり直しています。
+The check has limits. In an inspection in September 2026, **17 lines were found in the zh→ja `glosses.jsonl` where an English or Russian word had crept into the Japanese gloss** (`operation開始`, `материал材積`, …). The retired `polyphonic.jsonl` had 7 more of the same kind. All were fixed as described in [Change history](#change-history).
 
-17件のうち16件は `machine_backed`、つまり機械照合で裏付けが取れたとされた区分に入っていました（残る1件は `llm_fixed`）。照合は文字列の包含による粗い判定なので、訳文の一部が別の言語でも通ってしまいます。
+16 of the 17 were `machine_backed`, the category said to be confirmed by the machine cross-check (the other was `llm_fixed`). The cross-check is a coarse substring match, so a gloss whose part is in another language can pass.
 
-日中の `glosses.jsonl` は機械照合だけで、LLM校閲は実施していません。
+The ja→zh `glosses.jsonl` had only the machine cross-check; no LLM review was done.
 
-## 出どころ
+## Sources
 
-見出し語の選び方は方向ごとに異なり、ライセンスの選択に関わるため記録します。
+How headwords were chosen differs by direction and bears on the choice of license, so it is recorded here.
 
-**日中（`data/ja-zh/glosses.jsonl`）** — 見出し語は [Jitendex](https://jitendex.org/)（JMdict から派生した辞書）の見出し語を、JMdict の優先スコアの高い順に40,000語採りました。その40,000語は**すべて Jitendex の見出し語**です。うち27,250語（68.1%）は JMdict の `common` 印だけで採用が決まっています。つまり収録語の3分の2は、JMdict が「よく使われる」と印を付けた語をそのまま採ったものです。コーパス頻度は使っていません。
+**ja→zh (`data/ja-zh/glosses.jsonl`)** — The headwords are the 40,000 headwords of [Jitendex](https://jitendex.org/) (a dictionary derived from JMdict) with the highest JMdict priority scores. All 40,000 are **Jitendex headwords**. For 27,250 of them (68.1%), the JMdict `common` mark alone decided inclusion; that is, two thirds of the entries are words JMdict marks as frequently used. Corpus frequency was not used.
 
-JMdict は [Electronic Dictionary Research and Development Group (EDRDG)](https://www.edrdg.org/edrdg/licence.html) が CC BY-SA 4.0 で公開しています。**日中の見出し語の選定が JMdict に由来するため、リポジトリ全体を CC BY-SA 4.0 で提供しています。**
+JMdict is published by the [Electronic Dictionary Research and Development Group (EDRDG)](https://www.edrdg.org/edrdg/licence.html) under CC BY-SA 4.0. **Because the ja→zh headword selection derives from JMdict, the whole repository is provided under CC BY-SA 4.0.**
 
-**中日（`data/zh-ja/glosses.jsonl`）** — こちらは **JMdict 系の資源を使っていません**。見出し語は次の2つの集まりを合わせ、分かち書き辞書（cppjieba）の頻度順に選びました。
+**zh→ja (`data/zh-ja/glosses.jsonl`)** — This direction **uses no JMdict-derived resource**. Headwords were taken from the union of the following two sets, ordered by cppjieba frequency.
 
-1. 実際の使用ログに現れた、HSK の範囲外の語
-2. cppjieba の語彙と、市販辞書3種の見出し語の、両方にある語
+1. Words outside the HSK range that appeared in actual usage logs
+2. Words present both in the cppjieba vocabulary and in the headword lists of three commercial dictionaries
 
-市販辞書は**見出し語の照合にのみ使用し、語義本文は生成の入力にも成果物にも含めていません**。
+The commercial dictionaries were **used only to match headwords; their definition text was neither an input to generation nor part of the output**.
 
-**HSKの語彙（`hsk2`・`hsk3`・`trad`・`pos`・`alt_pinyin`）** — [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)（MITライセンス、commit `7ac65bf1a6387d35f1ade478906172a19311c7f9`）から採りました。この資料からは、**版ごとの級・見出し語・ピンイン・繁体字の綴り・品詞の候補**を採っています。2つの版（HSK 2.0 と HSK 3.0）を持つのもこの資料です。
-日本語訳は、そこに含まれる**英語の語義を使わず**、独立に生成しました。
-多音字52語については、読みと語義の対応を人が確認しています（`qa: human_reviewed`）。
+**HSK vocabulary (`hsk2`, `hsk3`, `trad`, `pos`, `alt_pinyin`)** — Taken from [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary) (MIT license, commit `7ac65bf1a6387d35f1ade478906172a19311c7f9`). From it we took **per-version levels, headwords, pinyin, traditional spellings and candidate parts of speech**. The two versions (HSK 2.0 and HSK 3.0) also come from this source.
+The Japanese glosses were generated independently, **without using the English definitions** it contains.
+For 52 polyphonic words, a person confirmed the pairing of reading and sense (`qa: human_reviewed`).
 
-MITライセンスは著作権表示の保持を求めます。原本の表示をそのまま載せます。
+The MIT license requires the copyright notice to be retained. The original notice is reproduced here.
 
 ```
 MIT License
@@ -294,71 +298,71 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 既知の限界
+## Known limitations
 
-- 訳は簡潔さを優先しており、語法・用例を含みません
-- 機械照合の不一致は誤訳を意味しません。逆に `machine_backed` も正しさの保証ではありません（[作り方と検品](#作り方と検品)のとおり、混入17件が通り抜けています）
-- 固有名詞・方言・ネット語の網羅性は低いままです
-- 訳が付いていない行があります。中日3行、日中942行で、いずれも `unsure: true` が立っています
-- **多音字の網羅性は低いままです。**読みを複数持つ語は791語で、収録95,478語のごく一部です
-- `alt_pinyin` は上流の資料にあった読みをそのまま並べたもので、**軽声表記のゆれと本当の別読みが混ざっています**（`东西` の `dōng xi`/`dōng xī` と、`上` の `shàng`/`shǎng` が同じ欄に入ります）
-- 繁体字の綴り（`trad`）と読み（`alt_pinyin`）の対応は持っていません。`发` が `發`/`fā` と `髮`/`fà` であることは、この形式からは復元できません
-- 日中方向で、日本語の文法用語の訳にかな表記とローマ字表記が混在します（`ら行` と `日语ra行`、`ya行`）。表記を統一していません
-- 訳の言語混入は上記の検証スクリプトが検出しますが、**誤訳そのものは検出できません**
-- HSK語のピンインは音節ごとに空白を入れます（`爱好` → `ài hào`）。それ以外の語は繋げて書くほうが多数です（`星系` → `xīngxì`）。**同じファイルの中で表記が揃っていません。** HSK分は出どころのデータの綴りをそのまま使っており、空白が音節の境界を示す情報を持つため、繋げる向きへの変換はしていません
-- 言語混入の検査にも抜けがあります。許可リストには一般的な英単語（`live` `house` `look` `boss` `play` `flag`）や単独の英字（`A`〜`X`）が載っており、これらの語で新しい生成失敗が起きても検出できません。また許可リストは中日と日中で共用のため、片方でだけ正当な語がもう片方でも通ります
+- Glosses favour brevity and contain no usage notes or examples
+- A mismatch in the machine cross-check does not mean a mistranslation, and `machine_backed` is no guarantee of correctness either (17 intrusions passed it, as described in [How it was made and checked](#how-it-was-made-and-checked))
+- Coverage of proper nouns, dialect and internet slang remains low
+- Some lines have no gloss: 3 in zh→ja and 942 in ja→zh, all with `unsure: true`
+- **Coverage of polyphonic words remains low.** 791 words have more than one reading, a small fraction of the 95,478 words
+- `alt_pinyin` lists the readings found in the upstream source as they are, so **neutral-tone spelling variants and genuinely different readings are mixed** (`东西`'s `dōng xi`/`dōng xī` and `上`'s `shàng`/`shǎng` sit in the same field)
+- Traditional spellings (`trad`) and readings (`alt_pinyin`) are not paired. That `发` is `發`/`fā` and `髮`/`fà` cannot be recovered from this format
+- In the ja→zh direction, translations of Japanese grammar terms mix kana and romanised spellings (`ら行` vs `日语ra行`, `ya行`). The notation has not been unified
+- The validation script detects language intrusion in glosses, but **it cannot detect mistranslations**
+- Pinyin of HSK words has a space between syllables (`爱好` → `ài hào`); most other words are written joined (`星系` → `xīngxì`). **The notation is not uniform within the file.** The HSK part keeps the spelling of its source as it is, because the spaces carry syllable-boundary information; no conversion towards the joined form was made
+- The language-intrusion check has gaps. The allowlist contains common English words (`live`, `house`, `look`, `boss`, `play`, `flag`) and single letters (`A`–`X`), so a new generation failure involving these words cannot be detected. The allowlist is also shared between the two directions, so a word legitimate in one passes in the other too
 
-## 修正履歴
+## Change history
 
-### 2026-09-03 — 単位を「語」から「語と読みの組」へ
+### 2026-09-03 — Unit changed from "word" to "headword and reading"
 
-1行が (見出し語, 読み) を表すようにし、読み別の語義を集めた `polyphonic.jsonl` を廃止して中日の `glosses.jsonl` へ統合しました（95,463行 → 96,326行）。
+Each line now represents a (headword, reading) pair. The per-reading sense file `polyphonic.jsonl` was retired and merged into the zh→ja `glosses.jsonl` (95,463 → 96,326 lines).
 
-- **`polyphonic.jsonl` を廃止しました。**読みが2つ以上ある語の追加の読み784行と、このファイルにしか無かった15語17行を取り込みました。残りは既存の行と同じ読みなので捨てています
-- HSKの多音字52語について、読み別の語義62行を足しました（`qa: human_reviewed`）
-- **`hsk` を `hsk2` と `hsk3` に分けました。**以前は「3.0を優先し、無ければ2.0」の合成値だったため、どちらの版の級かがデータから判別できませんでした
-- `trad`・`pos`・`reading_pos`・`alt_pinyin` を新設しました
-- `qa` に `human_reviewed` と `unchecked` を足しました
-- `data/manifest.json` を新設しました
-- **訳の件数の上限（3件）を形式から外しました。**生成のときの目安を形式の制約として書いていたためです
-- 既存の行の訳は、次の54語を除いて1文字も変えていません
-  - 52語 — 第1読みの行に別の読みの語義が混ざっていたので、対応する読みの行へ移しました（`着` の `zhe` の行から「触れる」「着る」を外すなど）。振り分けの根拠は人が確認済みの語義です
-  - `赶` — 上流の資料にしか無かった訳「間に合う」を足しました
-  - `酪酸` — まったく同じ訳が2つ入っていたので1つにしました
+- **`polyphonic.jsonl` was retired.** 784 additional readings of words with two or more readings, and 17 lines of the 15 words that existed only in that file, were taken in. The rest had the same reading as an existing line and were dropped
+- 62 per-reading sense lines were added for 52 polyphonic HSK words (`qa: human_reviewed`)
+- **`hsk` was split into `hsk2` and `hsk3`.** Previously it was a combined value ("prefer 3.0, else 2.0"), so the data could not tell which version a level belonged to
+- `trad`, `pos`, `reading_pos` and `alt_pinyin` were added
+- `human_reviewed` and `unchecked` were added to `qa`
+- `data/manifest.json` was added
+- **The upper limit on the number of glosses (three) was removed from the format.** It had been a generation guideline written down as a format constraint
+- Glosses of existing lines were not changed by a single character, except for the following 54 words
+  - 52 words — senses of other readings were mixed into the first reading's line and were moved to the line of the matching reading (for example, "触れる" and "着る" were removed from the `zhe` line of `着`). The split is based on senses confirmed by a person
+  - `赶` — the gloss "間に合う", which existed only in the upstream source, was added
+  - `酪酸` — two identical glosses were reduced to one
 
-### 2026-09-01 — HSK語彙の統合
+### 2026-09-01 — HSK vocabulary merged
 
-`data/zh-ja/glosses.jsonl` へHSKの11,470語を追記しました（83,993行 → 95,463行）。既存の83,993行は1バイトも変えていません。
+11,470 HSK words were appended to `data/zh-ja/glosses.jsonl` (83,993 → 95,463 lines). The existing 83,993 lines were not changed by a single byte.
 
-- 追記した語は既存の見出し語と**1語も重なりません**
-- 任意キー `hsk` を新設しました（[HSKの級](#hskの級)）
-- 訳は、出どころの資料が持っていた日本語訳（大半が1語）を土台に、別の語義がある語だけ訳を足したものです。平均の訳数は1.01から2.01になりました
-- 訳を足すときも元の訳は残しています。元の訳が入れ替わった23語は、いずれも `qa` が `llm_fixed` で、校閲が誤りを直したものです（`财经` の「財経」→「経済金融」など、中国語を漢字のまま写していた訳の修正）
+- The appended words **do not overlap with any** existing headword
+- The optional key `hsk` was added (see [HSK levels](#hsk-levels))
+- Glosses were built on the Japanese glosses the source already had (mostly one word), adding further senses only where they exist. The average number of glosses rose from 1.01 to 2.01
+- Original glosses were kept when adding. The 23 words whose original gloss was replaced are all `qa: llm_fixed`, where review corrected an error (for example `财经`'s "財経" → "経済金融", a gloss that had copied the Chinese characters as they were)
 
-### 2026-09-01 — 形式の統一と言語混入の訂正
+### 2026-09-01 — Format unification and language-intrusion fixes
 
-全件走査で見つかった88行を訂正しました。見出し語は1件も追加・削除・変更しておらず、行数も変わっていません。
+88 lines found by a full scan were corrected. No headword was added, removed or changed, and the line counts did not change.
 
-- **言語混入の訂正 45件** — 英語やロシア語が訳文に残っていた行を直しました（`black话` → `黑话`、`嫁side` → `嫁側` など）。訳を書き起こしたのではなく、同じ行のピンインや残っていた部分から元の訳を戻したもので、当てはめる語は一意に決まります
-- **言語混入の訂正のうち、訳語を選んだもの 10件** — 訳の全体が外国語で、当てはめる日本語が一意に決まらなかった行です（`territory` → `領域`、`двойной` → `二つの` など）。**この10件の訳語は上記の検品を通っていません。** 10件とも中日方向で、同じ行には別の訳が残っています。ただしそのうち2件は当時の `polyphonic.jsonl` のもので、このファイルは検品を通していません（残る8件は `glosses.jsonl` で、別の訳は検品を通っています）
-- **ピンイン欄の修復 11件** — 他の文字体系の同形文字が混じっていた8件（キリル文字の `т`・`е` が2件、IPA の `ɡ` が6件）、文字化けの跡（U+FFFD）が残っていた1件、数字の並びが紛れ込んでいた1件（`yījǐnr645guī`）、空だった1件を直しました。いずれも中国語の表記は正しく、読みだけが壊れていました。**11件とも目で読んでも気づけないもので、検証スクリプトが見つけました**
-- **ピンイン表記の統一 3件** — 中国語訳をラテン文字で書く語は、ピンイン欄にも同じ綴りを置く形に揃えました
-- **壊れた候補の削除 7件** — 同じ見出し語に正しい訳があり、追加の情報を持たない壊れた候補を削除しました
-- **訳の取り下げ 2件** — 訳として成立しておらず、正しい訳の手掛かりも無い2語（`仕手`、`瘤鯛`）は `zh` を空にし、`unsure: true` を残しました
-- **構造の統一 4件** — 形式から外れていた行を直しました。中日で `pinyin` キーが欠けていた1行、`senses` の要素に `unsure` が入っていた1行、日中でトップレベルに `pinyin: null` があった1行と `unsure: false` を明示していた1行です
-- **新しい訳の追加 6件** — 英語やロシア語しか入っていなかった6語に、新しく中国語訳を書きました。**この6語の訳は上記の検品を通っていません。** `unsure: true` は外していません
+- **Language-intrusion fixes, 45** — lines where English or Russian remained in the gloss were repaired (`black话` → `黑话`, `嫁side` → `嫁側`, …). The glosses were not rewritten; the original was restored from the pinyin or the remaining part of the same line, so the replacement is unambiguous
+- **Language-intrusion fixes where a gloss had to be chosen, 10** — lines whose whole gloss was in a foreign language and where the Japanese was not uniquely determined (`territory` → `領域`, `двойной` → `二つの`, …). **These 10 glosses did not go through the check above.** All 10 are zh→ja and the same line keeps another gloss. Two of them were in the `polyphonic.jsonl` of the time, which was never checked (the other 8 are in `glosses.jsonl`, where the other gloss was checked)
+- **Pinyin field repairs, 11** — 8 lines with look-alike characters from other scripts (Cyrillic `т`/`е` in 2, IPA `ɡ` in 6), 1 with a leftover replacement character (U+FFFD), 1 with a stray digit sequence (`yījǐnr645guī`), and 1 that was empty. In all of them the Chinese spelling was correct and only the reading was broken. **None of the 11 could be spotted by eye; the validation script found them**
+- **Pinyin notation unified, 3** — for words whose Chinese translation is written in Latin letters, the pinyin field now carries the same spelling
+- **Broken candidates removed, 7** — broken candidates that added no information to a headword that already had a correct translation
+- **Translations withdrawn, 2** — two words (`仕手`, `瘤鯛`) whose translation was not a translation and for which there was no clue to the right one had `zh` emptied and `unsure: true` kept
+- **Structure unified, 4** — lines that departed from the format: 1 zh→ja line missing the `pinyin` key, 1 with `unsure` inside a `senses` element, and in ja→zh 1 with a top-level `pinyin: null` and 1 spelling out `unsure: false`
+- **New translations added, 6** — six words that had only English or Russian received new Chinese translations. **These 6 translations did not go through the check above.** `unsure: true` was left in place
 
-この訂正で、当時の3ファイルの行の内訳はそれぞれ3種類以下に収まりました。訂正前は形式から外れた行が混じっていました。
+After this correction, each of the three files of the time had at most three kinds of lines. Before it, lines outside the format were mixed in.
 
-## ライセンス
+## License
 
-このリポジトリのデータと文書は **[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)** で提供します。正文は [`LICENSE`](LICENSE) にあります。
+The data and documents in this repository are provided under **[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)**. The full text is in [`LICENSE`](LICENSE).
 
-再配布や改変をするときは、帰属表示を残し、同じライセンスで公開してください。帰属表示の例を挙げます。
+When redistributing or modifying, keep the attribution and publish under the same license. An example attribution:
 
 ```
 zh-ja-dict by inakaegg, licensed under CC BY-SA 4.0.
 Headword selection derives from JMdict/Jitendex (EDRDG), licensed under CC BY-SA 4.0.
 ```
 
-ShareAlike を選んでいる理由は[出どころ](#出どころ)のとおりで、日中の見出し語の選定が JMdict に由来するためです。中日のデータは JMdict 系の資源を使っていませんが、リポジトリ全体を1つのライセンスで扱っています。
+ShareAlike was chosen for the reason given under [Sources](#sources): the ja→zh headword selection derives from JMdict. The zh→ja data uses no JMdict-derived resource, but the repository is treated under a single license.
