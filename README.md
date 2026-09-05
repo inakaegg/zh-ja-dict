@@ -186,6 +186,36 @@ Words per level:
 
 If you use the levels to pick "hard words", decide which version to use. Taking the easier of the two, or preferring 3.0 and falling back to 2.0, are both workable choices.
 
+## Using it from Swift
+
+The repository works as a SwiftPM package. It bundles the Chinese-to-Japanese data and `manifest.json` (the Japanese-to-Chinese direction is not included).
+
+No tags have been published yet, so pin the commit you want directly.
+
+```swift
+.package(url: "https://github.com/inakaegg/zh-ja-dict.git", revision: "<40-character commit SHA>")
+```
+
+```swift
+import ZhJaDictData
+
+let glosses = ZhJaDictData.glossesURL()   // data/zh-ja/glosses.jsonl
+let manifest = ZhJaDictData.manifestURL() // data/manifest.json
+```
+
+### Pass a bundle when you ship it inside an app
+
+Omit the argument and it looks in `Bundle.module`, which **you cannot rely on inside an `.app`**. The generated accessor searches exactly two places: next to the `.app` itself, and the `.build` path baked in with an absolute path at build time. An app that puts resources under `Contents/Resources/` misses the first and, on the machine that built it, **silently hits the second**. On any other machine neither matches.
+
+Resolve the bundle yourself using `ZhJaDictData.bundleName` (`zh-ja-dict_ZhJaDictData.bundle`) and pass it in.
+
+```swift
+let bundle = Bundle(url: appResources.appendingPathComponent(ZhJaDictData.bundleName))
+guard let glosses = ZhJaDictData.glossesURL(in: bundle) else {
+    throw MyError.bundledDataMissing   // not "lookup failed" but "the bundled file is missing"
+}
+```
+
 ## Validating the data
 
 `tools/validate_data.py` reads both data files and `manifest.json` in full and reports format violations. It runs on Python 3.9 or later with no extra installation.
