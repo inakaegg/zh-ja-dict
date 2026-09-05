@@ -13,3 +13,6 @@
 # Python
 __pycache__/
 *.pyc
+
+# Swift package の生成物
+/.build/

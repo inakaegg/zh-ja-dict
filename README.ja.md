@@ -184,6 +184,34 @@ HSKには2.0（6級まで）と3.0（7級まで）の2つの版があります�
 
 「難しい語を選ぶ」ような使い方をするなら、どちらの版を使うか決めてください。両方を見て易しいほうを採る、3.0を優先して無ければ2.0を使う、といった選び方はどれも成り立ちます。
 
+## Swiftから使う
+
+SwiftPMのpackageとして参照できます。中日のデータと `manifest.json` が同梱されます（日中は含みません）。
+
+```swift
+.package(url: "https://github.com/inakaegg/zh-ja-dict.git", from: "1.0.0")
+```
+
+```swift
+import ZhJaDictData
+
+let glosses = ZhJaDictData.glossesURL()   // data/zh-ja/glosses.jsonl
+let manifest = ZhJaDictData.manifestURL() // data/manifest.json
+```
+
+### アプリに組み込むときは、bundleを渡してください
+
+引数を省くと `Bundle.module` から探しますが、**これは `.app` の中では当てになりません**。SwiftPMが生成する探索先は2か所だけで、`.app` 直下と、ビルドした機械の絶対パスで焼き込まれた `.build` です。資源を `Contents/Resources/` へ収めるアプリでは前者に当たらず、**ビルドした機械では `.build` に当たって動いてしまいます**。配布先には `.build` が無いので、そこで初めて見つかりません。
+
+アプリ側で `ZhJaDictData.bundleName`（`zh-ja-dict_ZhJaDictData.bundle`）を手掛かりにbundleを解決し、渡してください。
+
+```swift
+let bundle = Bundle(url: appResources.appendingPathComponent(ZhJaDictData.bundleName))
+guard let glosses = ZhJaDictData.glossesURL(in: bundle) else {
+    throw MyError.bundledDataMissing   // 「引けない」ではなく「同梱物が欠けている」として扱う
+}
+```
+
 ## データを検証する
 
 `tools/validate_data.py` が2つのデータファイルと `manifest.json` を全件読み、形式の違反を報告します。Python 3.9以上があれば動きます。追加のインストールは要りません。
