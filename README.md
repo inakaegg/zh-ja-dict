@@ -190,8 +190,10 @@ If you use the levels to pick "hard words", decide which version to use. Taking 
 
 The repository works as a SwiftPM package. It bundles the Chinese-to-Japanese data and `manifest.json` (the Japanese-to-Chinese direction is not included).
 
+No tags have been published yet, so pin the commit you want directly.
+
 ```swift
-.package(url: "https://github.com/inakaegg/zh-ja-dict.git", from: "1.0.0")
+.package(url: "https://github.com/inakaegg/zh-ja-dict.git", revision: "<40-character commit SHA>")
 ```
 
 ```swift

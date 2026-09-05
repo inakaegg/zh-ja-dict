@@ -188,8 +188,10 @@ HSKには2.0（6級まで）と3.0（7級まで）の2つの版があります�
 
 SwiftPMのpackageとして参照できます。中日のデータと `manifest.json` が同梱されます（日中は含みません）。
 
+タグはまだ発行していないので、取り込む commit を直接指定してください。
+
 ```swift
-.package(url: "https://github.com/inakaegg/zh-ja-dict.git", from: "1.0.0")
+.package(url: "https://github.com/inakaegg/zh-ja-dict.git", revision: "<40桁のcommit SHA>")
 ```
 
 ```swift
