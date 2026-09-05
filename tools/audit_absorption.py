@@ -108,6 +108,34 @@ def main(argv=None) -> int:
     check("hsk-seed の全キー経路が対応表にある", not unclassified, f"未分類: {unclassified}")
     check("対応表に余分な経路がない", not unused, f"データに無い: {unused}")
 
+    # ★各キー経路の**実出現数**を、契約の数と突き合わせる。
+    # 経路の顔ぶれだけを見ると、ある経路の値が1件消えても気づけない。
+    expected_key_counts = {
+        "entries[].word": 11470, "entries[].simplified": 11470,
+        "entries[].traditional": 11470, "entries[].pinyin": 11470,
+        "entries[].meaning_ja[]": 11606, "entries[].pos": 11470,
+        "entries[].hsk_levels.2.0": 11470, "entries[].hsk_levels.3.0": 11470,
+        "entries[].senses[].pinyin": 11609, "entries[].senses[].meaning_ja": 11609,
+        "entries[].senses[].pos": 11609, "entries[].senses[].priority": 11609,
+        "entries[].senses[].source": 11609, "entries[].senses[].tags[]": 457,
+        "entries[].source_forms[].traditional": 12335,
+        "entries[].source_forms[].pinyin": 12335,
+        "entries[].flags.polyphonic": 377, "entries[].flags.needs_context": 52,
+        "entries[].flags.reviewed": 378,
+        "metadata.format": 1, "metadata.source_type": 1, "metadata.review_status": 1,
+        "metadata.hsk_versions[]": 2,
+        "metadata.provenance[].name": 3, "metadata.provenance[].url": 1,
+        "metadata.provenance[].commit": 1, "metadata.provenance[].sha256": 1,
+        "metadata.provenance[].license": 1, "metadata.provenance[].usage[]": 4,
+        "metadata.provenance[].definition_policy": 1,
+        "metadata.provenance[].path": 2, "metadata.provenance[].status": 2,
+    }
+    check("対応表と期待件数の顔ぶれが一致", set(expected_key_counts) == declared,
+          f"差: {sorted(set(expected_key_counts) ^ declared)}")
+    wrong_counts = {k: (found[k], v) for k, v in expected_key_counts.items() if found.get(k) != v}
+    check("各キー経路の実出現数が契約の数と一致", not wrong_counts,
+          f"不一致 {len(wrong_counts)}: {dict(list(wrong_counts.items())[:3])}")
+
     # ---------- 2. selector による排他的な分類 ----------
     lines.append("## 2. selector による分類（和が元の全出現と一致すること）")
 
@@ -155,6 +183,65 @@ def main(argv=None) -> int:
     check("senses[].tags[] の分類",
           tg["polyphone_review"] == 403 and tg["pos_tag"] == 54 and sum(tg.values()) == found["entries[].senses[].tags[]"],
           f"review{tg['polyphone_review']} + 品詞{tg['pos_tag']} = {sum(tg.values())}")
+
+    # ---------- 2b. 廃棄と決めた項目の件数を、契約の数と突き合わせる ----------
+    #
+    # ★入力から数え直した値を、D14 に書いた数と比べる。入力側だけを数えて
+    # 「和が一致する」ことしか見ないと、入力が変わったときに両辺が一緒に動いて
+    # しまい、`flags.reviewed` が 378 から 0 になっても気づけない。
+    lines.append("## 2b. 廃棄と決めた項目の件数（D14 の数と突き合わせる）")
+    entries = list(seed.values())
+    discard_counts = {
+        "entries[].simplified": sum(1 for e in entries if e.get("simplified") == e["word"]),
+        "entries[].meaning_ja[]（現行 gloss に無い分）":
+            sum(1 for w, e in seed.items() for m in e["meaning_ja"]
+                if m not in set(old_gloss[w]["gloss"])),
+        "entries[].pos の unknown を含む語":
+            sum(1 for e in entries if "unknown" in [x.strip() for x in e["pos"].split(",")]),
+        "entries[].senses[].priority": found["entries[].senses[].priority"],
+        "entries[].senses[].source == project_generated":
+            sum(1 for e in entries for x in e["senses"] if x.get("source") == "project_generated"),
+        "entries[].senses[].tags[] の polyphone_review":
+            sum(1 for e in entries for x in e["senses"]
+                for t in (x.get("tags") or []) if t == "polyphone_review"),
+        "entries[].senses[].tags[] の品詞タグ":
+            sum(1 for e in entries for x in e["senses"]
+                for t in (x.get("tags") or []) if t != "polyphone_review"),
+        "source_forms の (繁体字, 読み) が直積でない語":
+            sum(1 for e in entries
+                if len({f["traditional"] for f in e["source_forms"]})
+                * len({f["pinyin"] for f in e["source_forms"]})
+                != len({(f["traditional"], f["pinyin"]) for f in e["source_forms"]})),
+        "entries[].flags.polyphonic": sum(1 for e in entries if (e.get("flags") or {}).get("polyphonic")),
+        "entries[].flags.needs_context": sum(1 for e in entries if (e.get("flags") or {}).get("needs_context")),
+        "entries[].flags.reviewed": sum(1 for e in entries if (e.get("flags") or {}).get("reviewed")),
+        "metadata.provenance[].sha256": sum(1 for pr in root["metadata"]["provenance"] if "sha256" in pr),
+        "metadata.provenance[].path": sum(1 for pr in root["metadata"]["provenance"] if "path" in pr),
+    }
+    # D14 に書いた数。入力が変わればここと合わなくなる。
+    expected_discards = {
+        "entries[].simplified": 11470,
+        "entries[].meaning_ja[]（現行 gloss に無い分）": 23,
+        "entries[].pos の unknown を含む語": 250,
+        "entries[].senses[].priority": 11609,
+        "entries[].senses[].source == project_generated": 11152,
+        "entries[].senses[].tags[] の polyphone_review": 403,
+        "entries[].senses[].tags[] の品詞タグ": 54,
+        "source_forms の (繁体字, 読み) が直積でない語": 69,
+        "entries[].flags.polyphonic": 377,
+        "entries[].flags.needs_context": 52,
+        "entries[].flags.reviewed": 378,
+        "metadata.provenance[].sha256": 1,
+        "metadata.provenance[].path": 2,
+    }
+    for label, want in expected_discards.items():
+        got = discard_counts[label]
+        check(f"{label} が {want}", got == want, f"実際 {got}")
+    # 既存行に当たる reviewed（廃棄）の数も、行単位の分類から取って突き合わせる。
+    check("entries[].senses[].source == reviewed の既存行分が 395",
+          src["reviewed_existing"] == 395, f"実際 {src['reviewed_existing']}")
+    for key in ("format", "source_type", "review_status"):
+        check(f"metadata.{key} が1件ある", key in root["metadata"])
 
     # ---------- 3. absorb の照合（照合鍵つき） ----------
     lines.append("## 3. 吸収の照合（照合鍵で確かめる。値の包含検査にしない）")
@@ -250,9 +337,15 @@ def main(argv=None) -> int:
     # ---------- 4. README / manifest を吸収先とする経路 ----------
     lines.append("## 4. README・manifest を吸収先とする経路")
     if readme:
-        pr = root["metadata"]["provenance"][0]
-        for label, value in (("provenance[].url", pr["url"]), ("provenance[].commit", pr["commit"]),
-                             ("provenance[].name", pr["name"]), ("provenance[].license", "MIT")):
+        # provenance は3件ある。1件目だけを見ると、残り2件の出典名が README に
+        # 無くても通ってしまう。全件の name を見る。
+        missing_names = [pr["name"] for pr in root["metadata"]["provenance"]
+                         if pr["name"] not in readme]
+        check("README に provenance[].name が全件ある", not missing_names, f"欠け: {missing_names}")
+        first = root["metadata"]["provenance"][0]
+        for label, value in (("provenance[].url", first["url"]),
+                             ("provenance[].commit", first["commit"]),
+                             ("provenance[].license", "MIT")):
             check(f"README に {label} がある", value in readme, value[:60])
         check("README に hsk_versions（2.0 と 3.0）がある", "2.0" in readme and "3.0" in readme)
     else:
@@ -294,18 +387,73 @@ def main(argv=None) -> int:
             other.append(w)
     check("例外の語も pinyin/qa/unsure は変わっていない", not other, f"差分 {len(other)}: {other[:5]}")
 
-    # `酪酸` の変更は重複の除去だけであること。
-    lao = by_word["酪酸"][0]["gloss"]
-    old_lao = next(r["gloss"] for r in old_rows if r["word"] == "酪酸")
-    check("酪酸 の変更は重複の除去だけ",
-          lao == list(dict.fromkeys(old_lao)) and set(lao) == set(old_lao),
-          f"{old_lao} → {lao}")
+    # ★例外54語の `gloss` を、入力から導いた期待値と**完全一致**で照合する。
+    # 除外したままにすると、D11 で外したはずの訳を戻しても気づけない。
+    old_by_word = {r["word"]: r for r in old_rows}
+    wrong = []
+    for w in sorted(exempt):
+        old = old_by_word[w]
+        want = list(dict.fromkeys(old["gloss"]))        # 酪酸: 重複を落とす
+        if w in seed_multi:
+            # D11: 別読みの語義 − 既存行の読みにも属する語義 を取り除く
+            row_key = norm(w, old["pinyin"])
+            table = {}
+            for sense in seed[w]["senses"]:
+                table.setdefault(norm(w, sense["pinyin"]), []).append(sense)
+            own = {x["meaning_ja"] for x in table.get(row_key, [])}
+            other_m = {x["meaning_ja"] for k, ss in table.items() if k != row_key for x in ss}
+            want = [g for g in want if g not in (other_m - own)]
+        if w == "赶":
+            # senses にしか無い訳を末尾へ足す
+            key = norm(w, old["pinyin"])
+            for sense in seed[w]["senses"]:
+                if norm(w, sense["pinyin"]) == key and sense["meaning_ja"] not in want:
+                    want.append(sense["meaning_ja"])
+        got = by_word[w][0]["gloss"]
+        if got != want:
+            wrong.append((w, got, want))
+    check("例外54語の gloss が入力から導いた期待値と完全一致", not wrong,
+          f"不一致 {len(wrong)}: {wrong[:3]}")
 
-    old_keys = [(r["word"], norm(r["word"], r["pinyin"])) for r in old_rows]
-    new_keys = [(r["word"], norm(r["word"], r["pinyin"])) for r in new_rows]
-    it = iter(new_keys)
-    is_sub = all(k in it for k in old_keys)
-    check("旧95,463行の (word, pinyin) が新ファイルの部分列（同じ順序）", is_sub)
+    # ★新しい行の `qa` を、その行の出典から決まる値と照合する。
+    # 件数だけを数えると、2つの行で値を入れ替えても通ってしまう。
+    old_keys = {(r["word"], norm(r["word"], r["pinyin"])) for r in old_rows}
+    want_qa = {}
+    for entry in old_poly:
+        w = entry["word"]
+        distinct = len({norm(w, x["pinyin"]) for x in entry["senses"]})
+        for sense in entry["senses"]:
+            key = (w, norm(w, sense["pinyin"]))
+            if key in old_keys:
+                continue
+            if w not in old_by_word or distinct >= 2:
+                want_qa.setdefault(key, "unchecked")      # polyphonic 由来
+    for w in seed_multi:
+        for sense in seed[w]["senses"]:
+            key = (w, norm(w, sense["pinyin"]))
+            if key not in old_keys:
+                want_qa.setdefault(key, "human_reviewed")  # hsk-seed の確認済み語義
+    bad_qa = []
+    for r in new_rows:
+        key = (r["word"], norm(r["word"], r["pinyin"]))
+        if key in old_keys:
+            continue
+        expected = want_qa.get(key)
+        if expected is None:
+            bad_qa.append((r["word"], r["pinyin"], r["qa"], "出典が無い行"))
+        elif r["qa"] != expected:
+            bad_qa.append((r["word"], r["pinyin"], r["qa"], expected))
+    check("新しい行の qa が出典と行単位で一致", not bad_qa, f"不一致 {len(bad_qa)}: {bad_qa[:3]}")
+
+    # ★旧95,463行が、新ファイルの同じ順序の部分列であること（合格条件5）。
+    # 行を並べ替えても件数は変わらないので、順序を見る検査が別に要る。
+    old_seq = [(r["word"], norm(r["word"], r["pinyin"])) for r in old_rows]
+    new_seq = iter([(r["word"], norm(r["word"], r["pinyin"])) for r in new_rows])
+    check("旧95,463行の (word, pinyin) が新ファイルの部分列（同じ順序）",
+          all(k in new_seq for k in old_seq))
+    check("出典から期待した新しい行がすべて在る",
+          len(want_qa) == len(new_rows) - len(old_rows),
+          f"期待 {len(want_qa)} / 実際 {len(new_rows) - len(old_rows)}")
 
     # ---------- 6. polyphonic の全 senses の3分類（合格条件6b） ----------
     #

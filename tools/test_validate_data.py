@@ -52,7 +52,7 @@ def run(rows_by_file):
         return [x.kind for x in violations], counts
 
 
-def run_main(rows_by_file, manifest="auto", extra_files=()):
+def run_main(rows_by_file, manifest="auto", extra_files=(), write_null=False):
     """データと manifest を書き、`validate_data.main()` を通す。終了コードを返す。
 
     manifest の突き合わせと退役ファイルの検出は main() の側にあるので、
@@ -77,7 +77,9 @@ def run_main(rows_by_file, manifest="auto", extra_files=()):
                 "generated": "2026-09-03",
                 "files": {rel: {"lines": len(rows)} for rel, rows in rows_by_file.items()},
             }
-        if manifest is not None:
+        if write_null:
+            (data / "manifest.json").write_text("null\n", encoding="utf-8")
+        elif manifest is not None:
             (data / "manifest.json").write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         buffer = io.StringIO()
@@ -480,6 +482,41 @@ class ManifestTest(unittest.TestCase):
     def test_filesがオブジェクトでなければ報告する(self):
         code, out = run_main(self.clean(), manifest={
             "schema_version": 2, "generated": "2026-09-03", "files": []})
+        self.assertEqual(code, 1)
+        self.assertIn("bad-type", out)
+
+    def test_manifestがnullなら報告する(self):
+        # JSON の null は Python の None になる。読めなかった場合と同じ値なので、
+        # 目印を分けないと素通りする。
+        code, out = run_main(self.clean(), manifest=None, write_null=True)
+        self.assertEqual(code, 1)
+        self.assertIn("bad-type", out)
+
+    def test_manifestが配列なら報告する(self):
+        code, out = run_main(self.clean(), manifest=[])
+        self.assertEqual(code, 1)
+        self.assertIn("bad-type", out)
+
+    def test_manifestの必須キーの欠落を報告する(self):
+        for missing in ("schema_version", "generated", "files"):
+            full = {"schema_version": 2, "generated": "2026-09-05",
+                    "files": {ZH_JA: {"lines": 2}, JA_ZH: {"lines": 2}}}
+            del full[missing]
+            code, out = run_main(self.clean(), manifest=full)
+            self.assertEqual(code, 1, missing)
+            self.assertIn("missing-key", out, missing)
+
+    def test_filesの項目にlinesが無ければ報告する(self):
+        code, out = run_main(self.clean(), manifest={
+            "schema_version": 2, "generated": "2026-09-05",
+            "files": {ZH_JA: {}, JA_ZH: {"lines": 2}}})
+        self.assertEqual(code, 1)
+        self.assertIn("missing-key", out)
+
+    def test_generatedが空文字なら報告する(self):
+        code, out = run_main(self.clean(), manifest={
+            "schema_version": 2, "generated": "",
+            "files": {ZH_JA: {"lines": 2}, JA_ZH: {"lines": 2}}})
         self.assertEqual(code, 1)
         self.assertIn("bad-type", out)
 
