@@ -13,13 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 旧版の glosses.jsonl を履歴から取り出すため、浅い取得にしない。
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       # 外部依存は使わない。標準ライブラリだけで動く。
-      - name: 検証スクリプトの自己テスト
-        run: python3 tools/test_validate_data.py
-      - name: 変換スクリプトの自己テスト
-        run: python3 tools/test_build_glosses.py
+      - name: 道具の自己テスト
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
+      # schema 2 で最後に data/zh-ja/glosses.jsonl を持っていた commit。
+      # 旧版の全行が新しいデータに対応していることを、ここから取り出して確かめる。
+      - name: 旧版のデータを履歴から取り出す
+        run: git show 79ad5fd:data/zh-ja/glosses.jsonl > /tmp/old-glosses.jsonl
       - name: データを全件検証する
-        run: python3 tools/validate_data.py
+        run: |
+          python3 tools/validate_data.py --cedict-entries 124985 \
+            --existing /tmp/old-glosses.jsonl

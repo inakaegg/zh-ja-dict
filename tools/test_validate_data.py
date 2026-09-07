@@ -3,12 +3,15 @@
 
     python3 tools/test_validate_data.py
 
-小さな作り物のデータを渡し、検出すべき違反を検出し、正しいデータを違反にしないことを確かめる。
-実データは使わない（実データの検証は tools/validate_data.py 自体が行う）。
+小さな作り物のデータを渡し、検出すべき違反を検出し、正しいデータを違反にしないことを
+確かめる。実データは使わない（実データの検証は tools/validate_data.py 自体が行う）。
 """
 
 from __future__ import annotations
 
+import contextlib
+import copy
+import io
 import json
 import pathlib
 import sys
@@ -16,586 +19,466 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dataset_sources  # noqa: E402
+import entries_file  # noqa: E402
 import validate_data as v  # noqa: E402
 
-ZH_JA = "zh-ja/glosses.jsonl"
+ZH_JA = f"zh-ja/{entries_file.NAME}"
 JA_ZH = "ja-zh/glosses.jsonl"
 
-CLEAN = {
-    ZH_JA: [
-        {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"},
-        {"word": "幖", "pinyin": "biāo", "gloss": [], "unsure": True, "qa": "llm_ok"},
-    ],
-    JA_ZH: [
-        {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}]},
-        {"word": "と言うもの", "zh": [], "unsure": True},
-    ],
-}
+ENTRIES = [
+    {"word": "上级", "trad": "上級", "pinyin": "shàng jí", "hsk2": 5, "hsk3": 6,
+     "pos": ["n"], "cl": [{"w": "个", "t": "個", "py": "ge4"}],
+     "seed": "machine_backed", "moe": "full",
+     "senses": [
+         {"en": ["higher authorities"], "ja": "上層部", "qa": "llm_ok"},
+         {"en": ["superiors"], "ja": "上司", "qa": "llm_fixed", "misc": ["coll"]},
+     ]},
+    {"word": "女", "pinyin": "rǔ", "moe": "none",
+     "senses": [{"ja": "汝（rǔ）の旧字体", "qa": "derived",
+                 "variant_of": [{"kind": "old", "w": "汝", "py": "ru3"}]}]},
+    {"word": "运输机", "trad": "運輸機", "pinyin": "yùnshūjī", "src": "zh-ja-dict",
+     "hsk3": 7, "senses": [{"ja": "輸送機", "qa": "machine_backed"}]},
+]
+
+JA_ZH_ROWS = [
+    {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}]},
+    {"word": "と言うもの", "zh": [], "unsure": True},
+]
 
 
-def run(rows_by_file):
-    """作り物のデータを一時ディレクトリへ書き、検証して違反の種類を返す。"""
+def write_data(entries, ja_zh=None, directory=None):
+    """作り物のデータを一時ディレクトリへ書く。"""
+    data = pathlib.Path(directory)
+    entries_file.write(data / ZH_JA,
+                       (json.dumps(row, ensure_ascii=False) for row in entries))
+    path = data / JA_ZH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n"
+                for row in (JA_ZH_ROWS if ja_zh is None else ja_zh)),
+        encoding="utf-8")
+    return data
+
+
+def run(entries, ja_zh=None):
+    """検証して違反の種類の一覧と、区分の数え上げを返す。"""
     with tempfile.TemporaryDirectory() as tmp:
-        data = pathlib.Path(tmp)
-        for relative, rows in rows_by_file.items():
-            path = data / relative
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
-                encoding="utf-8",
-            )
+        data = write_data(entries, ja_zh, tmp)
         violations = []
-        counts = {}
-        for relative, validate in v.FILES:
-            parsed = v.read_jsonl(data / relative, violations, relative)
-            counts[relative] = validate(data / relative, parsed, violations)
-        return [x.kind for x in violations], counts
+        zh_rows = v.read_entries(data / ZH_JA, violations, ZH_JA)
+        zh_counts = v.validate_zh_ja_entries(data / ZH_JA, zh_rows, violations)
+        ja_rows = v.read_jsonl(data / JA_ZH, violations, JA_ZH)
+        ja_counts = v.validate_ja_zh_glosses(data / JA_ZH, ja_rows, violations)
+        return [x.kind for x in violations], {ZH_JA: zh_counts, JA_ZH: ja_counts}
 
 
-def run_main(rows_by_file, manifest="auto", extra_files=(), write_null=False):
-    """データと manifest を書き、`validate_data.main()` を通す。終了コードを返す。
+def manifest_for(entries, data: pathlib.Path):
+    sizes = entries_file.sizes(data / ZH_JA)
+    return {
+        "schema_version": dataset_sources.SCHEMA_VERSION,
+        "generated": "2026-09-06",
+        "files": {
+            ZH_JA: {
+                "lines": len(entries),
+                "entries_skeleton": sum(1 for e in entries if not e.get("src")),
+                "entries_supplement": sum(1 for e in entries if e.get("src")),
+                "senses": sum(len(e["senses"]) for e in entries),
+                "compression": entries_file.COMPRESSION,
+                "bytes": sizes.compressed,
+                "uncompressed_bytes": sizes.uncompressed,
+            },
+            JA_ZH: {"lines": len(JA_ZH_ROWS)},
+        },
+        "sources": dataset_sources.SOURCES,
+    }
 
-    manifest の突き合わせと退役ファイルの検出は main() の側にあるので、
-    そこを見るテストはこちらを使う。
-    """
-    import io
-    import contextlib
+
+def run_main(entries, manifest="auto", extra_files=(), extra_args=()):
+    """`validate_data.main()` を通す。終了コードと標準出力を返す。"""
     with tempfile.TemporaryDirectory() as tmp:
-        data = pathlib.Path(tmp)
-        for relative, rows in rows_by_file.items():
-            path = data / relative
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows),
-                            encoding="utf-8")
+        data = write_data(entries, None, tmp)
         for relative in extra_files:
             path = data / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("{}\n", encoding="utf-8")
         if manifest == "auto":
-            manifest = {
-                "schema_version": 2,
-                "generated": "2026-09-03",
-                "files": {rel: {"lines": len(rows)} for rel, rows in rows_by_file.items()},
-            }
-        if write_null:
-            (data / "manifest.json").write_text("null\n", encoding="utf-8")
-        elif manifest is not None:
+            manifest = manifest_for(entries, data)
+        if manifest is not None:
             (data / "manifest.json").write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         buffer = io.StringIO()
         with contextlib.redirect_stdout(buffer):
-            code = v.main(["--data", str(data)])
+            code = v.main(["--data", str(data), *extra_args])
         return code, buffer.getvalue()
 
 
-def with_change(relative, index, change):
-    """CLEAN のうち1行だけ差し替えたデータを作る。"""
-    rows = {key: [dict(row) for row in value] for key, value in CLEAN.items()}
-    rows[relative][index] = change
+def changed(index, entry):
+    """ENTRIES のうち1件だけ差し替えたデータを作る。"""
+    rows = copy.deepcopy(ENTRIES)
+    rows[index] = entry
     return rows
 
 
-class CleanDataTest(unittest.TestCase):
+def with_sense(index, sense_index, sense):
+    rows = copy.deepcopy(ENTRIES)
+    rows[index]["senses"][sense_index] = sense
+    return rows
+
+
+class CleanData(unittest.TestCase):
     def test_正しいデータは違反ゼロ(self):
-        kinds, _ = run(CLEAN)
+        kinds, _ = run(ENTRIES)
         self.assertEqual(kinds, [])
 
     def test_区分の合計が行数に一致する(self):
-        _, counts = run(CLEAN)
-        for relative, count in counts.items():
-            exclusive = sum(value for key, value in count.items() if not key.startswith("_"))
-            self.assertEqual(exclusive, len(CLEAN[relative]), relative)
+        _, counts = run(ENTRIES)
+        exclusive = sum(value for key, value in counts[ZH_JA].items()
+                        if not key.startswith("_"))
+        self.assertEqual(exclusive, len(ENTRIES))
+
+    def test_骨格と補遺を数える(self):
+        _, counts = run(ENTRIES)
+        self.assertEqual(counts[ZH_JA]["骨格"], 2)
+        self.assertEqual(counts[ZH_JA]["補遺"], 1)
 
 
-class StructureTest(unittest.TestCase):
-    def test_必須キーの欠落を報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "美国", "gloss": ["アメリカ"], "qa": "llm_ok"}))
+class EntryStructure(unittest.TestCase):
+    def test_必須キーの欠落(self):
+        kinds, _ = run(changed(0, {"word": "上级", "senses": [{"ja": "上", "qa": "llm_ok"}]}))
         self.assertIn("missing-key", kinds)
 
-    def test_仕様に無いキーを報告する(self):
-        kinds, _ = run(with_change(JA_ZH, 0, {"word": "一新", "pinyin": None, "zh": [{"s": "革新", "pinyin": "géxīn"}]}))
+    def test_仕様に無いキー(self):
+        kinds, _ = run(changed(0, {"word": "上级", "pinyin": "shàng jí", "nope": 1,
+                                   "senses": [{"ja": "上", "qa": "llm_ok"}]}))
         self.assertIn("unknown-key", kinds)
 
-    def test_入れ子の仕様に無いキーを報告する(self):
-        # 入れ子のオブジェクトを持つのは日中の `zh[]` だけになった。
-        change = {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai", "note": "x"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
+    def test_退役したキー(self):
+        # schema 2 の `gloss`・`reading_pos` は語ごとに1行だった名残。
+        kinds, _ = run(changed(0, {"word": "上级", "pinyin": "shàng jí",
+                                   "gloss": ["上司"],
+                                   "senses": [{"ja": "上", "qa": "llm_ok"}]}))
+        self.assertIn("retired-key", kinds)
+
+    def test_senses_が空なら違反(self):
+        kinds, _ = run(changed(0, {"word": "上级", "pinyin": "shàng jí", "senses": []}))
+        self.assertIn("bad-type", kinds)
+
+    def test_繁体が簡体と同じなら書かない(self):
+        kinds, _ = run(changed(0, {"word": "女", "trad": "女", "pinyin": "rǔ",
+                                   "senses": [{"ja": "汝", "qa": "llm_ok"}]}))
+        self.assertIn("redundant-trad", kinds)
+
+    def test_HSKの級が範囲外(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["hsk3"] = 8      # 3.0 は7級まで
+        self.assertIn("bad-hsk", run(rows)[0])
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["hsk2"] = 7      # 2.0 は6級まで
+        self.assertIn("bad-hsk", run(rows)[0])
+
+    def test_品詞は上流の略号だけ(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["pos"] = ["noun"]
+        self.assertIn("unknown-value", run(rows)[0])
+
+    def test_srcとseedとmoeの値(self):
+        for key, bad in (("src", "どこか"), ("seed", "そのうち"), ("moe", "たぶん")):
+            rows = copy.deepcopy(ENTRIES)
+            rows[0][key] = bad
+            self.assertIn("unknown-value", run(rows)[0], key)
+
+    def test_台湾の読みも読みとして検査する(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["tw_pr"] = "xia4hai2"     # 数字が残っている＝変換し忘れ
+        self.assertIn("bad-pinyin", run(rows)[0])
+
+    def test_人名の中黒は読みとして通る(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["pinyin"] = "Shǐ dì fēn · Hā pò"
+        self.assertEqual(run(rows)[0], [])
+
+    def test_見出しの数字はそのまま読みに出てよい(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["word"] = "双11"
+        rows[0]["pinyin"] = "Shuāng 11"
+        self.assertEqual(run(rows)[0], [])
+
+
+class Duplicates(unittest.TestCase):
+    def test_同じ3つ組は重複(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows.append(copy.deepcopy(rows[0]))
+        self.assertIn("duplicate-entry", run(rows)[0])
+
+    def test_繁体が違えば別のentry(self):
+        rows = copy.deepcopy(ENTRIES)
+        clone = copy.deepcopy(rows[0])
+        clone["trad"] = "尚級"      # 繁体だけ違う
+        rows.append(clone)
+        self.assertEqual(run(rows)[0], [])
+
+    def test_大小文字が違えば別のentry(self):
+        # CC-CEDICT は固有名詞の読みを大文字で始める（`三 Sān` 姓 と `三 sān` 数詞）。
+        rows = copy.deepcopy(ENTRIES)
+        rows.append({"word": "三", "pinyin": "sān",
+                     "senses": [{"ja": "3", "qa": "llm_ok"}]})
+        rows.append({"word": "三", "pinyin": "Sān",
+                     "senses": [{"ja": "サン（姓）", "qa": "llm_ok"}]})
+        self.assertEqual(run(rows)[0], [])
+
+
+class SenseStructure(unittest.TestCase):
+    def test_ja_が無い(self):
+        kinds, _ = run(with_sense(0, 0, {"en": ["x"], "qa": "llm_ok"}))
+        self.assertIn("missing-key", kinds)
+
+    def test_qa_が想定外(self):
+        kinds, _ = run(with_sense(0, 0, {"ja": "上", "qa": "たぶん"}))
+        self.assertIn("bad-qa", kinds)
+
+    def test_語義に仕様に無いキー(self):
+        kinds, _ = run(with_sense(0, 0, {"ja": "上", "qa": "llm_ok", "zh": "上"}))
         self.assertIn("unknown-key", kinds)
 
-    def test_unsureにfalseを書いたら報告する(self):
-        kinds, _ = run(with_change(JA_ZH, 0, {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}], "unsure": False}))
+    def test_misc_は表の値だけ(self):
+        kinds, _ = run(with_sense(0, 0, {"ja": "上", "qa": "llm_ok", "misc": ["computing"]}))
+        self.assertIn("unknown-value", kinds)
+
+    def test_参照の種類(self):
+        kinds, _ = run(with_sense(1, 0, {
+            "ja": "汝の異体字", "qa": "derived",
+            "variant_of": [{"kind": "see", "w": "汝"}]}))   # see は see_also 側の種類
+        self.assertIn("bad-kind", kinds)
+
+    def test_参照の繁体が簡体と同じなら書かない(self):
+        kinds, _ = run(with_sense(1, 0, {
+            "ja": "汝の異体字", "qa": "derived",
+            "variant_of": [{"kind": "old", "w": "汝", "t": "汝"}]}))
+        self.assertIn("redundant-trad", kinds)
+
+    def test_参照先の語に空白があれば違反(self):
+        # `Israel 以色列` のように英語の説明が参照先へ混ざった状態を捕まえる。
+        kinds, _ = run(with_sense(1, 0, {
+            "ja": "以色列（Yǐ sè liè）の略", "qa": "derived",
+            "see_also": [{"kind": "abbr", "w": "Israel 以色列"}]}))
+        self.assertIn("text-in-ref", kinds)
+
+    def test_量詞は語義の欄ではない(self):
+        kinds, _ = run(with_sense(0, 0, {
+            "ja": "上", "qa": "llm_ok", "cl": [{"w": "个"}]}))
+        self.assertIn("unknown-key", kinds)
+
+    def test_量詞にkindは無い(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[0]["cl"] = [{"kind": "see", "w": "个"}]
+        self.assertIn("unknown-key", run(rows)[0])
+
+    def test_unsure_は_true_のときだけ(self):
+        kinds, _ = run(with_sense(0, 0, {"ja": "上", "qa": "llm_ok", "unsure": False}))
         self.assertIn("explicit-false", kinds)
 
-    def test_unsureなしで訳が空なら報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 1, {"word": "幖", "pinyin": "biāo", "gloss": [], "qa": "llm_ok"}))
-        self.assertIn("empty-without-unsure", kinds)
 
-    def test_unsureがあれば訳が空でも違反にしない(self):
-        kinds, _ = run(CLEAN)
-        self.assertNotIn("empty-without-unsure", kinds)
+class JapaneseText(unittest.TestCase):
+    def test_中国語だけの訳(self):
+        kinds, _ = run(with_sense(0, 0, {"en": ["x"], "ja": "shàng jí", "qa": "llm_ok"}))
+        self.assertIn("bad-ja", kinds)
 
-    def test_日中の見出し語の重複を報告する(self):
-        # 日中は今も1語1行。中日は (語, 読み) が単位になったので WordPinyinTest で見る。
-        rows = {key: [dict(row) for row in value] for key, value in CLEAN.items()}
-        rows[JA_ZH].append({"word": "明白", "zh": [{"s": "清楚", "pinyin": "qīngchu"}]})
-        kinds, _ = run(rows)
-        self.assertIn("duplicate-word", kinds)
+    def test_英訳がそのまま残る(self):
+        kinds, _ = run(with_sense(0, 0,
+                                  {"en": ["supply"], "ja": "supplyする", "qa": "llm_ok"}))
+        self.assertIn("bad-ja", kinds)
 
-    def test_qaの想定外の値を報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "unknown"}))
-        self.assertIn("bad-qa", kinds)
-
-    def test_qaがnullでも報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": None}))
-        self.assertIn("bad-qa", kinds)
-
-    def test_空文字と前後の空白を報告する(self):
-        kinds, _ = run(with_change(JA_ZH, 0, {"word": "仕手", "zh": [{"s": "", "pinyin": ""}], "unsure": True}))
-        self.assertIn("empty-string", kinds)
-        self.assertIn("empty-pinyin", kinds)
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "美国", "pinyin": "Měiguó", "gloss": [" アメリカ"], "qa": "llm_ok"}))
-        self.assertIn("whitespace", kinds)
-
-    def test_同じ見出し語の中の候補の重複を報告する(self):
-        change = {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}, {"s": "明白", "pinyin": "míngbai"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("duplicate-candidate", kinds)
-
-
-class LanguageTest(unittest.TestCase):
-    def test_キリル文字を報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "雙", "pinyin": "shuāng", "gloss": ["двойной"], "qa": "llm_ok"}))
-        self.assertIn("cyrillic", kinds)
-
-    def test_登録の無いラテン語を報告する(self):
-        kinds, _ = run(with_change(ZH_JA, 0, {"word": "坐班", "pinyin": "zuòbān", "gloss": ["office勤務する"], "qa": "llm_ok"}))
-        self.assertIn("foreign-latin", kinds)
-
-    def test_登録済みのラテン語は違反にしない(self):
-        # allowlist-latin.txt に載っている語（USB・EU など）は通す。
-        change = {"word": "优盘", "pinyin": "yōupán", "gloss": ["USBメモリ"], "qa": "llm_ok"}
-        kinds, _ = run(with_change(ZH_JA, 0, change))
-        self.assertNotIn("foreign-latin", kinds)
-
-    def test_中国語訳のかなを報告する(self):
-        change = {"word": "試し", "zh": [{"s": "试す", "pinyin": "shì"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("kana-in-chinese", kinds)
-
-    def test_登録済みの文法用語のかなは違反にしない(self):
-        change = {"word": "サ変", "zh": [{"s": "サ行不规则活用", "pinyin": "sà háng bù guīzé huóyòng"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertNotIn("kana-in-chinese", kinds)
-
-    def test_数字だけの訳は違反にしない(self):
-        change = {"word": "十一", "pinyin": "shíyī", "gloss": ["11"], "qa": "llm_ok"}
-        kinds, _ = run(with_change(ZH_JA, 0, change))
-        self.assertNotIn("no-japanese", kinds)
-
-    def test_ピンイン欄のキリル文字の同形文字を報告する(self):
-        # 'т' は U+0442（キリル文字）で、ラテン文字の 't' と見分けがつかない。
-        change = {"word": "宇宙像", "zh": [{"s": "宇宙图景", "pinyin": "yǔzhòu тújǐng"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄のかなを報告する(self):
-        change = {"word": "ら行", "zh": [{"s": "日语ra行", "pinyin": "ら háng"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄の数字混入を報告する(self):
-        # 実データにあった `衣锦荣归 / yījǐnr645guī` の型。数字を無条件に許すと見逃す。
-        change = {"word": "衣锦荣归", "pinyin": "yījǐnr645guī", "gloss": ["錦を飾って帰る"], "qa": "llm_ok"}
-        kinds, _ = run(with_change(ZH_JA, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄の全角数字を報告する(self):
-        # ASCII の数字だけを確認済みtokenとして読み飛ばすので、全角 `１`（U+FF11）は残る。
-        change = {"word": "衣锦荣归", "pinyin": "yījǐn１guī", "gloss": ["錦を飾って帰る"], "qa": "llm_ok"}
-        kinds, _ = run(with_change(ZH_JA, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄のアラビア数字を報告する(self):
-        change = {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai٣"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_確認済みの数字入りの略号は通す(self):
-        change = {"word": "一代雑種", "zh": [{"s": "F1杂交种", "pinyin": "F1 zájiāozhǒng"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertNotIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄のIPAの同形文字を報告する(self):
-        # 'ɡ' は U+0261。Unicode の名前が LATIN で始まるため、
-        # 「ラテン文字かどうか」で判定すると素通しになる。
-        change = {"word": "歌合わせ", "zh": [{"s": "和歌比赛", "pinyin": "héɡē bǐsài"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("bad-pinyin", kinds)
-
-    def test_ピンイン欄のギリシャ文字とゆれ記号は通す(self):
-        # β-内酰胺类・θ函数の接頭辞、省略の `…`、声調の合成記号は実データで使われている。
-        for pinyin in ("β-nèixiān'ànlèi", "θ hánshù", "xiàng…shì de", "m̄ shá", "xiānsheng／nǚshì"):
-            change = {"word": "見出し", "zh": [{"s": "词条", "pinyin": pinyin}]}
-            kinds, _ = run(with_change(JA_ZH, 0, change))
-            self.assertNotIn("bad-pinyin", kinds, pinyin)
-
-    def test_拡張漢字面の元素名を違反にしない(self):
-        # 𨭆（U+28B46、ハッシウム）は BMP の外にある正規の中国語の元素名。
-        change = {"word": "ハッシウム", "zh": [{"s": "𨭆", "pinyin": "hēi"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
+    def test_許可表のラテン語だけの訳は通る(self):
+        # `CD-ROM`・`APEC` は日本語でもそう書く。
+        kinds, _ = run(with_sense(0, 0, {"en": ["CD-ROM"], "ja": "CD-ROM", "qa": "llm_ok"}))
         self.assertEqual(kinds, [])
 
+    def test_生成した訳は24文字まで(self):
+        kinds, _ = run(with_sense(0, 0,
+                                  {"ja": "あ" * 25, "qa": "llm_ok"}))
+        self.assertIn("bad-ja", kinds)
 
-ABSENT = object()  # 「キーを書かない」を、値が None であることと区別するための印
-
-
-class HskTest(unittest.TestCase):
-    def base(self, key, level):
-        row = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"}
-        if level is not ABSENT:
-            row[key] = level
-        return with_change(ZH_JA, 0, row)
-
-    def test_有効な級は違反にしない(self):
-        for level in range(1, 7):
-            self.assertEqual(run(self.base("hsk2", level))[0], [], f"hsk2={level}")
-        for level in range(1, 8):
-            self.assertEqual(run(self.base("hsk3", level))[0], [], f"hsk3={level}")
-
-    def test_版ごとに上限が違う(self):
-        # HSK 2.0 は6級まで。7級は 3.0 にしかない。
-        self.assertIn("bad-hsk", run(self.base("hsk2", 7))[0])
-        self.assertNotIn("bad-hsk", run(self.base("hsk3", 7))[0])
-
-    def test_級が無くても違反にしない(self):
-        self.assertEqual(run(self.base("hsk2", ABSENT))[0], [])
-
-    def test_明示的なnullを報告する(self):
-        self.assertIn("bad-hsk", run(self.base("hsk3", None))[0])
-
-    def test_範囲の外を報告する(self):
-        for level in (0, 8, -1, 99):
-            self.assertIn("bad-hsk", run(self.base("hsk3", level))[0], f"hsk3={level}")
-
-    def test_整数でない値を報告する(self):
-        for level in ("3", 3.0, [3], {"3.0": 3}):
-            self.assertIn("bad-hsk", run(self.base("hsk3", level))[0], f"hsk3={level!r}")
-
-    def test_真偽値を報告する(self):
-        # Python では bool が int の派生なので、True は素通しになりやすい。
-        for level in (True, False):
-            self.assertIn("bad-hsk", run(self.base("hsk3", level))[0], f"hsk3={level!r}")
-
-    def test_級は区分ではなく属性として数える(self):
-        _, counts = run(self.base("hsk3", 3))
-        c = counts[ZH_JA]
-        exclusive = sum(x for k, x in c.items() if not k.startswith("_"))
-        self.assertEqual(exclusive, len(CLEAN[ZH_JA]))
-        self.assertEqual(c["_属性:hsk3"], 1)
-        self.assertEqual(c["_hsk3 3級"], 1)
-
-    def test_退役キーhskを専用の違反として報告する(self):
-        row = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed", "hsk": 3}
-        kinds, _ = run(with_change(ZH_JA, 0, row))
-        self.assertIn("retired-key", kinds)
-        self.assertNotIn("unknown-key", kinds)
-
-    def test_日中に級を書いたら仕様外のキーとして報告する(self):
-        kinds, _ = run(with_change(JA_ZH, 0, {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}], "hsk3": 3}))
-        self.assertIn("unknown-key", kinds)
-
-
-class ItemCountTest(unittest.TestCase):
-    """件数の上限は設けない。空でないことと重複がないことだけを見る。"""
-
-    def test_訳が4件以上でも受理する(self):
-        change = {"word": "美国", "pinyin": "Měiguó", "gloss": ["ア", "メ", "リ", "カ"], "qa": "llm_ok"}
-        self.assertEqual(run(with_change(ZH_JA, 0, change))[0], [])
-
-    def test_日中の候補が4件以上でも受理する(self):
-        change = {"word": "明白", "zh": [{"s": s, "pinyin": "x"} for s in ("明白", "清楚", "清晰", "了解")]}
-        self.assertEqual(run(with_change(JA_ZH, 0, change))[0], [])
-
-    def test_訳の重複を報告する(self):
-        # 実データにあった `酪酸 / ["酪酸","酪酸"]` の型。
-        change = {"word": "酪酸", "pinyin": "lào suān", "gloss": ["酪酸", "酪酸"], "qa": "llm_ok"}
-        self.assertIn("duplicate-item", run(with_change(ZH_JA, 0, change))[0])
-
-    def test_日中の候補の重複を報告する(self):
-        change = {"word": "明白", "zh": [{"s": "明白", "pinyin": "a"}, {"s": "明白", "pinyin": "b"}]}
-        self.assertIn("duplicate-candidate", run(with_change(JA_ZH, 0, change))[0])
-
-
-class ArrayKeyTest(unittest.TestCase):
-    """`trad`・`pos`・`reading_pos`・`alt_pinyin` の検査。"""
-
-    def row(self, **extra):
-        row = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "machine_backed"}
-        row.update(extra)
-        return with_change(ZH_JA, 0, row)
-
-    def test_正しい配列は違反にしない(self):
-        kinds, _ = run(self.row(trad=["美國"], pos=["n"], reading_pos=["v"], alt_pinyin=["měiguo"]))
+    def test_参照から作った訳は読みを含んでよい(self):
+        kinds, _ = run(with_sense(1, 0, {
+            "ja": "开金（kāi jīn）に同じ", "qa": "derived",
+            "see_also": [{"kind": "see", "w": "开金", "py": "kai1 jin1"}]}))
         self.assertEqual(kinds, [])
 
-    def test_配列でない値を報告する(self):
-        for key in ("trad", "pos", "alt_pinyin"):
-            self.assertIn("bad-type", run(self.row(**{key: "n"}))[0], key)
-        self.assertIn("bad-type", run(self.row(pos=["n"], reading_pos="v"))[0])
+    def test_旧版から引き継いだ訳は長くてよい(self):
+        rows = copy.deepcopy(ENTRIES)
+        rows[2]["senses"][0]["ja"] = "、".join(["輸送機"] * 8)   # 31文字
+        self.assertEqual(run(rows)[0], [])
 
-    def test_空配列を報告する(self):
-        for key in ("trad", "pos", "alt_pinyin"):
-            self.assertIn("empty-array", run(self.row(**{key: []}))[0], key)
-        self.assertIn("empty-array", run(self.row(pos=["n"], reading_pos=[]))[0])
-
-    def test_配列内の重複を報告する(self):
-        self.assertIn("duplicate-item", run(self.row(trad=["美國", "美國"]))[0])
-        self.assertIn("duplicate-item", run(self.row(pos=["n", "n"]))[0])
-
-    def test_許容語彙にない品詞を報告する(self):
-        self.assertIn("unknown-value", run(self.row(pos=["名詞"]))[0])
-        self.assertIn("unknown-value", run(self.row(pos=["n"], reading_pos=["名詞"]))[0])
-
-    def test_reading_posはinterjectionを受理する(self):
-        # 上流の senses[].pos に英単語が1つだけ混じる（哦・嗯）。
-        self.assertEqual(run(self.row(pos=["e"], reading_pos=["interjection"]))[0], [])
-        self.assertIn("unknown-value", run(self.row(pos=["interjection"]))[0])
-
-    def test_reading_posだけあってposが無い行を報告する(self):
-        # README の復元規則（reading_pos が無い行は語の pos と同じ）を機械で保証する。
-        self.assertIn("reading-pos-without-pos", run(self.row(reading_pos=["n"]))[0])
-        self.assertNotIn("reading-pos-without-pos", run(self.row(pos=["n"], reading_pos=["v"]))[0])
-
-    def test_alt_pinyinの不正なピンインを報告する(self):
-        # ピンイン欄と同じ検査を各値へ掛ける（キリル文字の同形文字）。
-        self.assertIn("bad-pinyin", run(self.row(alt_pinyin=["měiguó", "тújǐng"]))[0])
-
-    def test_要素が文字列でないものを報告する(self):
-        self.assertIn("bad-type", run(self.row(pos=["n", 3]))[0])
-        self.assertIn("bad-type", run(self.row(trad=["美國", ""]))[0])
+    def test_キリル文字(self):
+        kinds, _ = run(with_sense(0, 0, {"ja": "материал材", "qa": "llm_ok"}))
+        self.assertIn("bad-ja", kinds)
 
 
-class WordPinyinTest(unittest.TestCase):
-    """(語, 読み) の一意性と、語の属性の行間一致。"""
-
-    def two(self, first, second):
-        rows = {k: [dict(r) for r in v] for k, v in CLEAN.items()}
-        rows[ZH_JA] = [first, second]
-        return rows
-
-    def test_同じ語の別の読みは重複にしない(self):
-        kinds, _ = run(self.two(
-            {"word": "着", "pinyin": "zhe", "gloss": ["〜している"], "qa": "machine_backed"},
-            {"word": "着", "pinyin": "zháo", "gloss": ["触れる"], "qa": "human_reviewed"}))
-        self.assertEqual(kinds, [])
-
-    def test_同じ読みの重複を報告する(self):
-        kinds, _ = run(self.two(
-            {"word": "着", "pinyin": "zhe", "gloss": ["〜している"], "qa": "machine_backed"},
-            {"word": "着", "pinyin": "zhe", "gloss": ["別の訳"], "qa": "llm_ok"}))
-        self.assertIn("duplicate-word-pinyin", kinds)
-
-    def test_空白と軽声の印の違いは同じ読みとみなす(self):
-        # `sāng jiā` と `sāngjiā`、`yǒukòngr5` と `yǒukòngr` は同じ読み。
-        for a, b in (("sāng jiā", "sāngjiā"), ("yǒukòngr", "yǒukòngr5"), ("guī ˙nü", "guī nü")):
-            kinds, _ = run(self.two(
-                {"word": "丧家", "pinyin": a, "gloss": ["訳1"], "qa": "llm_ok"},
-                {"word": "丧家", "pinyin": b, "gloss": ["訳2"], "qa": "llm_ok"}))
-            self.assertIn("duplicate-word-pinyin", kinds, f"{a} vs {b}")
-
-    def test_大小文字は既定で同じ読みとみなす(self):
-        kinds, _ = run(self.two(
-            {"word": "俞", "pinyin": "Yú", "gloss": ["姓"], "qa": "llm_ok"},
-            {"word": "俞", "pinyin": "yú", "gloss": ["承諾する"], "qa": "unchecked"}))
-        self.assertIn("duplicate-word-pinyin", kinds)
-
-    def test_一覧に載せた語は大小文字を区別する(self):
-        # 包头 は Bāotóu（地名）と bāotóu（頭巾）が別の語である。
-        kinds, _ = run(self.two(
-            {"word": "包头", "pinyin": "Bāotóu", "gloss": ["包頭(地名)"], "qa": "llm_ok"},
-            {"word": "包头", "pinyin": "bāotóu", "gloss": ["頭巾"], "qa": "unchecked"}))
-        self.assertEqual(kinds, [])
-
-    def test_語の属性の食い違いを報告する(self):
-        kinds, _ = run(self.two(
-            {"word": "着", "pinyin": "zhe", "gloss": ["〜している"], "qa": "machine_backed", "hsk3": 1},
-            {"word": "着", "pinyin": "zháo", "gloss": ["触れる"], "qa": "human_reviewed", "hsk3": 2}))
-        self.assertIn("attribute-mismatch", kinds)
-
-    def test_行の属性reading_posは行ごとに違ってよい(self):
-        kinds, _ = run(self.two(
-            {"word": "着", "pinyin": "zhe", "gloss": ["〜している"], "qa": "machine_backed",
-             "pos": ["u", "v"], "reading_pos": ["u"]},
-            {"word": "着", "pinyin": "zháo", "gloss": ["触れる"], "qa": "human_reviewed",
-             "pos": ["u", "v"], "reading_pos": ["v"]}))
-        self.assertEqual(kinds, [])
+class Archive(unittest.TestCase):
+    def test_壊れた圧縮ファイルを違反にする(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = write_data(ENTRIES, None, tmp)
+            path = data / ZH_JA
+            path.write_bytes(path.read_bytes()[:-20])   # 末尾を欠けさせる
+            violations = []
+            v.read_entries(path, violations, ZH_JA)
+            self.assertIn("broken-archive", [x.kind for x in violations])
 
 
-class QaValueTest(unittest.TestCase):
-    def test_新しい2値を受理する(self):
-        for value in ("human_reviewed", "unchecked"):
-            change = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": value}
-            self.assertEqual(run(with_change(ZH_JA, 0, change))[0], [], value)
-
-    def test_想定外の値を報告する(self):
-        change = {"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "reviewed"}
-        self.assertIn("bad-qa", run(with_change(ZH_JA, 0, change))[0])
-
-
-class ManifestTest(unittest.TestCase):
-    """manifest と実ファイルの突き合わせ、退役ファイルの検出（main() 側）。"""
-
-    def clean(self):
-        return {k: [dict(r) for r in v] for k, v in CLEAN.items()}
-
-    def test_正しいmanifestなら成功で終わる(self):
-        code, _ = run_main(self.clean())
+class Manifest(unittest.TestCase):
+    def test_正しいmanifestなら成功(self):
+        code, _ = run_main(ENTRIES)
         self.assertEqual(code, 0)
 
-    def test_manifestが無ければ失敗する(self):
-        code, out = run_main(self.clean(), manifest=None)
+    def test_manifest_が無い(self):
+        code, out = run_main(ENTRIES, manifest=None)
         self.assertEqual(code, 1)
         self.assertIn("missing-manifest", out)
 
-    def test_行数が食い違えば失敗する(self):
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 2, "generated": "2026-09-03",
-            "files": {ZH_JA: {"lines": 999}, JA_ZH: {"lines": 2}}})
-        self.assertEqual(code, 1)
-        self.assertIn("line-count-mismatch", out)
-
-    def test_schema_versionが違えば失敗する(self):
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 1, "generated": "2026-09-03",
-            "files": {ZH_JA: {"lines": 2}, JA_ZH: {"lines": 2}}})
+    def test_schema_version_が違う(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = write_data(ENTRIES, None, tmp)
+            manifest = manifest_for(ENTRIES, data)
+        manifest["schema_version"] = 2
+        code, out = run_main(ENTRIES, manifest=manifest)
         self.assertEqual(code, 1)
         self.assertIn("bad-schema-version", out)
 
-    def test_filesの値がオブジェクトでなければ報告する(self):
-        # 手で書いた manifest でも例外にならず、違反として報告すること。
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 2, "generated": "2026-09-03",
-            "files": {ZH_JA: 2, JA_ZH: {"lines": 2}}})
+    def test_行数が食い違う(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = write_data(ENTRIES, None, tmp)
+            manifest = manifest_for(ENTRIES, data)
+        manifest["files"][ZH_JA]["lines"] = 99
+        code, out = run_main(ENTRIES, manifest=manifest)
         self.assertEqual(code, 1)
-        self.assertIn("bad-type", out)
+        self.assertIn("line-count-mismatch", out)
 
-    def test_filesがオブジェクトでなければ報告する(self):
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 2, "generated": "2026-09-03", "files": []})
+    def test_骨格と補遺の数が食い違う(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = write_data(ENTRIES, None, tmp)
+            manifest = manifest_for(ENTRIES, data)
+        manifest["files"][ZH_JA]["entries_supplement"] = 0
+        code, out = run_main(ENTRIES, manifest=manifest)
         self.assertEqual(code, 1)
-        self.assertIn("bad-type", out)
+        self.assertIn("count-mismatch", out)
 
-    def test_manifestがnullなら報告する(self):
-        # JSON の null は Python の None になる。読めなかった場合と同じ値なので、
-        # 目印を分けないと素通りする。
-        code, out = run_main(self.clean(), manifest=None, write_null=True)
+    def test_出どころの表と食い違う(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = write_data(ENTRIES, None, tmp)
+            manifest = manifest_for(ENTRIES, data)
+        manifest["sources"] = {"どこか": {"license": "不明"}}
+        code, out = run_main(ENTRIES, manifest=manifest)
         self.assertEqual(code, 1)
-        self.assertIn("bad-type", out)
+        self.assertIn("sources-mismatch", out)
 
-    def test_manifestが配列なら報告する(self):
-        code, out = run_main(self.clean(), manifest=[])
+    def test_骨格の数をCCCEDICTと突き合わせる(self):
+        code, out = run_main(ENTRIES, extra_args=("--cedict-entries", "2"))
+        self.assertEqual(code, 0)
+        code, out = run_main(ENTRIES, extra_args=("--cedict-entries", "3"))
         self.assertEqual(code, 1)
-        self.assertIn("bad-type", out)
+        self.assertIn("skeleton-count-mismatch", out)
 
-    def test_manifestの必須キーの欠落を報告する(self):
-        for missing in ("schema_version", "generated", "files"):
-            full = {"schema_version": 2, "generated": "2026-09-05",
-                    "files": {ZH_JA: {"lines": 2}, JA_ZH: {"lines": 2}}}
-            del full[missing]
-            code, out = run_main(self.clean(), manifest=full)
-            self.assertEqual(code, 1, missing)
-            self.assertIn("missing-key", out, missing)
-
-    def test_filesの項目にlinesが無ければ報告する(self):
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 2, "generated": "2026-09-05",
-            "files": {ZH_JA: {}, JA_ZH: {"lines": 2}}})
-        self.assertEqual(code, 1)
-        self.assertIn("missing-key", out)
-
-    def test_generatedが空文字なら報告する(self):
-        code, out = run_main(self.clean(), manifest={
-            "schema_version": 2, "generated": "",
-            "files": {ZH_JA: {"lines": 2}, JA_ZH: {"lines": 2}}})
-        self.assertEqual(code, 1)
-        self.assertIn("bad-type", out)
-
-    def test_廃止したpolyphonicが残っていれば失敗する(self):
-        code, out = run_main(self.clean(), extra_files=("zh-ja/polyphonic.jsonl",))
+    def test_退役したファイルが残っている(self):
+        code, out = run_main(ENTRIES, extra_files=("zh-ja/glosses.jsonl",))
         self.assertEqual(code, 1)
         self.assertIn("retired-file", out)
 
 
-class NonStringCandidateTest(unittest.TestCase):
-    def test_sが配列でも例外にならず報告する(self):
-        # set へ入れると TypeError になる型。重複検査を飛ばして bad-type だけ出す。
-        change = {"word": "明白", "zh": [{"s": ["明白"], "pinyin": "míngbai"}]}
-        kinds, _ = run(with_change(JA_ZH, 0, change))
-        self.assertIn("bad-type", kinds)
+class ExistingCoverage(unittest.TestCase):
+    def test_旧版の行がすべて対応していれば違反ゼロ(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False,
+                                         encoding="utf-8") as handle:
+            for row in ({"word": "上级", "pinyin": "shàng jí", "gloss": ["上司"],
+                         "qa": "llm_ok"},
+                        {"word": "上級", "pinyin": "shàng jí", "gloss": ["上司"],
+                         "qa": "llm_ok"},         # 繁体の見出しからも引ける
+                        {"word": "运输机", "pinyin": "yùnshūjī", "gloss": ["輸送機"],
+                         "qa": "llm_ok"}):
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+            path = handle.name
+        code, out = run_main(ENTRIES, extra_args=("--existing", path))
+        self.assertEqual(code, 0, out)
+
+    def test_声調だけ違う行は一と不のときだけ対応とみなす(self):
+        # `繃 bèng` を `繃 bēng` に当てて「対応済み」と数えると、旧版の読みと訳が
+        # 消えたことを見逃す。変調を認めるのは `一`・`不` で始まる語だけ。
+        rows = copy.deepcopy(ENTRIES)
+        rows.append({"word": "繃", "pinyin": "bēng",
+                     "senses": [{"ja": "ぴんと張る", "qa": "llm_ok"}]})
+        rows.append({"word": "一路", "pinyin": "yī lù",
+                     "senses": [{"ja": "道中", "qa": "llm_ok"}]})
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False,
+                                         encoding="utf-8") as handle:
+            for row in ({"word": "繃", "pinyin": "bèng", "gloss": ["ひび割れる"],
+                         "qa": "llm_ok"},
+                        {"word": "一路", "pinyin": "yí lù", "gloss": ["道中"],
+                         "qa": "llm_ok"}):
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+            path = handle.name
+        code, out = run_main(rows, extra_args=("--existing", path))
+        self.assertEqual(code, 1)
+        self.assertIn("繃 bèng", out)          # 変調ではないので見逃さない
+        self.assertNotIn("一路 yí lù", out)    # 先頭の `一` の変調は対応とみなす
+
+    def test_旧版にしかない行を報告する(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False,
+                                         encoding="utf-8") as handle:
+            handle.write(json.dumps({"word": "没有", "pinyin": "méiyǒu",
+                                     "gloss": ["ない"], "qa": "llm_ok"},
+                                    ensure_ascii=False) + "\n")
+            path = handle.name
+        code, out = run_main(ENTRIES, extra_args=("--existing", path))
+        self.assertEqual(code, 1)
+        self.assertIn("existing-not-covered", out)
 
 
-class BrokenFileTest(unittest.TestCase):
-    def write(self, tmp, text):
-        data = pathlib.Path(tmp)
-        for relative, rows in CLEAN.items():
-            path = data / relative
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
-                encoding="utf-8",
-            )
-        (data / ZH_JA).write_text(text, encoding="utf-8")
-        violations = []
-        for relative, validate in v.FILES:
-            validate(data / relative, v.read_jsonl(data / relative, violations, relative), violations)
-        return [x.kind for x in violations]
+class HskCoverage(unittest.TestCase):
+    """HSK の元データとの突き合わせ。データが消えたら止まること。"""
 
-    def test_壊れたJSONを報告する(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self.assertIn("broken-json", self.write(tmp, '{"word": "美国"\n'))
+    def seed(self, entries):
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
+                                         encoding="utf-8") as handle:
+            json.dump({"entries": entries}, handle, ensure_ascii=False)
+            return handle.name
 
-    def test_文字化けの跡を報告する(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            line = '{"word": "側頭骨", "pinyin": "niè�", "gloss": ["側頭骨"], "qa": "llm_ok"}\n'
-            self.assertIn("replacement-char", self.write(tmp, line))
+    def test_級がそろっていれば成功(self):
+        path = self.seed([{"word": "上级", "hsk_levels": {"2.0": 5, "3.0": 6}}])
+        code, out = run_main(ENTRIES, extra_args=("--hsk-seed", path))
+        self.assertEqual(code, 0, out)
 
-    def test_末尾の改行の欠落を報告する(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            line = '{"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "llm_ok"}'
-            self.assertIn("no-final-newline", self.write(tmp, line))
+    def test_見出しが消えていれば違反(self):
+        # 数えるだけで違反にしないと、データが消えても成功で終わってしまう。
+        path = self.seed([{"word": "存在しない語", "hsk_levels": {"3.0": 1}}])
+        code, out = run_main(ENTRIES, extra_args=("--hsk-seed", path))
+        self.assertEqual(code, 1)
+        self.assertIn("hsk-word-missing", out)
 
-    def test_CRLFを報告する(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            line = '{"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "llm_ok"}\r\n'
-            self.assertIn("crlf", self.write(tmp, line))
+    def test_級が食い違えば違反(self):
+        path = self.seed([{"word": "上级", "hsk_levels": {"3.0": 2}}])
+        code, out = run_main(ENTRIES, extra_args=("--hsk-seed", path))
+        self.assertEqual(code, 1)
+        self.assertIn("hsk-not-kept", out)
 
-    def test_BOMを報告しても行は読める(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            line = '﻿{"word": "美国", "pinyin": "Měiguó", "gloss": ["アメリカ"], "qa": "llm_ok"}\n'
-            kinds = self.write(tmp, line)
-            self.assertIn("bom", kinds)
-            # BOM を剥がして読むので、JSON の解析までは失敗しない。
-            self.assertNotIn("broken-json", kinds)
 
-    def test_UTF8として読めないバイトを報告する(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            data = pathlib.Path(tmp)
-            for relative, rows in CLEAN.items():
-                path = data / relative
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(
-                    "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
-                    encoding="utf-8",
-                )
-            (data / ZH_JA).write_bytes(
-                b'{"word": "\xff\xfe", "pinyin": "x", "gloss": ["\xe3\x81\x82"], "qa": "llm_ok"}\n'
-            )
-            violations = []
-            for relative, validate in v.FILES:
-                validate(data / relative, v.read_jsonl(data / relative, violations, relative), violations)
-            kinds = [x.kind for x in violations]
-            self.assertIn("invalid-utf8", kinds)
+class JaZh(unittest.TestCase):
+    """日中は schema 3 でも形を変えていない。従来の検査が効いていることを見る。"""
+
+    def test_中国語訳にかなが混じる(self):
+        kinds, _ = run(ENTRIES, ja_zh=[
+            {"word": "明白", "zh": [{"s": "明白する", "pinyin": "míngbai"}]}])
+        self.assertIn("kana-in-chinese", kinds)
+
+    def test_候補が空なのに_unsure_が無い(self):
+        kinds, _ = run(ENTRIES, ja_zh=[{"word": "明白", "zh": []}])
+        self.assertIn("empty-without-unsure", kinds)
+
+    def test_見出し語の重複(self):
+        kinds, _ = run(ENTRIES, ja_zh=[
+            {"word": "明白", "zh": [{"s": "明白", "pinyin": "míngbai"}]},
+            {"word": "明白", "zh": [{"s": "清楚", "pinyin": "qīngchu"}]}])
+        self.assertIn("duplicate-word", kinds)
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()
