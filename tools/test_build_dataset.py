@@ -13,6 +13,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import build_dataset  # noqa: E402
+import common_format  # noqa: E402
 import dataset_sources  # noqa: E402
 import entries_file  # noqa: E402
 
@@ -166,11 +167,26 @@ class Build(unittest.TestCase):
         self.assertEqual(manifest["schema_version"], dataset_sources.SCHEMA_VERSION)
         self.assertEqual(manifest["generated"], "2026-09-07")
 
+    def test_native生成と同時に共通形式も更新する(self):
+        rows, _ = self.run_build()
+        common = self.out / "common"
+        stats = common_format.validate_common(
+            common / entries_file.NAME, common / "manifest.json",
+            self.out / "zh-ja" / entries_file.NAME, self.out / "manifest.json")
+        self.assertEqual(stats.entries, len(rows))
+        self.assertEqual(stats.senses, sum(len(row["senses"]) for row in rows))
+
     def test_同じ入力からは同じバイト列(self):
         self.run_build()
-        first = (self.out / "zh-ja" / entries_file.NAME).read_bytes()
+        paths = [
+            self.out / "zh-ja" / entries_file.NAME,
+            self.out / "manifest.json",
+            self.out / "common" / entries_file.NAME,
+            self.out / "common" / "manifest.json",
+        ]
+        first = [path.read_bytes() for path in paths]
         self.run_build()
-        self.assertEqual((self.out / "zh-ja" / entries_file.NAME).read_bytes(), first)
+        self.assertEqual([path.read_bytes() for path in paths], first)
 
     def test_仕様に無いキーがあれば止まる(self):
         rows = [dict(BASE[1], nope=1)]

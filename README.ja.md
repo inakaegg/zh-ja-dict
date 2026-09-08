@@ -18,6 +18,7 @@
 区分ごとの検品の度合いは [qa の意味](#qa-の意味) を見てください。
 
 - 中日 `data/zh-ja/entries.jsonl.deflate` 157,798 entry・229,130 語義（圧縮後 7,424,431 バイト、展開すると 34,405,030 バイト）。日中 `data/ja-zh/glosses.jsonl` 40,000行
+- `data/common/entries.jsonl.deflate` は、同じ中日157,798 entry・229,130語義を複数辞書で共通に読める形式へ損失なく写したものです
 - 中日の1行は **1 entry**です。(簡体字, 繁体字, 読み) の3つ組で一意になります
 - **中日は圧縮して同梱します。** raw DEFLATE（RFC 1951）です（[圧縮の形](#圧縮の形)）
 - 検品の度合いは語義ごとに違います。`qa` の欄で見分けられます
@@ -28,9 +29,10 @@
 | ファイル | 方向 | 行数 | 語義 | 内容 |
 |---|---|---|---|---|
 | `data/zh-ja/entries.jsonl.deflate` | 中日 | 157,798 | 229,130 | 語義ごとの簡潔な日本語訳。英語の語義・ピンイン・量詞・語感の印つき |
+| `data/common/entries.jsonl.deflate` | 中日 | 157,798 | 229,130 | 上の中日データを共通辞書形式v1へ写したもの。native属性と検品記録を保持 |
 | `data/ja-zh/glosses.jsonl` | 日中 | 40,000 | — | 中国語訳（ピンイン付き）。1語1行 |
 
-このほかに `data/manifest.json` があります（[manifest.json](#manifestjson)）。
+このほかにnative用の `data/manifest.json` と、共通形式用の `data/common/manifest.json` があります（[manifest.json](#manifestjson)）。
 
 中日の entry は2種類あります。
 
@@ -44,6 +46,16 @@
 補遺があるのは、CC-CEDICT が実文に現れる語と読みをすべて載せているわけではないからです。旧版の見出し語は分かち書き辞書（cppjieba）の語彙から選んでおり、`运输机`（輸送機）・`身旁`・`三合板`（合板）のように、CC-CEDICT に無い普通の語が3万語あります。これらを落とすと、文章中に現れた語を引ける割合が下がります。旧版の訳をそのまま持つ entry として残しました。**補遺 entry には英語の語義がありません。**
 
 ## 形式
+
+### アプリ共通形式v1
+
+`data/common/entries.jsonl.deflate` は、確定済みの中日nativeデータを機械的に写したファイルです。nativeの見出し・読み・HSK・語義・訳・注記・配列順を変えず、共通欄と `extensions.zh-ja-dict` に分けて保持します。nativeファイルは互換用として残り、共通形式への変換時にも内容を変更しません。
+
+共通entryには `id`、`headwords`、`readings`、`levels`、`verification`、`extensions`、`senses` があります。IDは `(word, trad, pinyin)` の3項目から作るため、同じ見出しと読みで繁体字だけが違うentryをまとめません。各senseは、CC-CEDICT由来の英語を `glosses`、現在の日本語訳を `translations` に保持します。
+
+訳の作り方は `provenance`、何を照合したかは `verification` に分けています。`machine_backed` は旧版で辞書資源との文字列照合が報告された記録で、語義の意味が確認済みという印ではありません。`derived` にも意味確認済みの記録は付けません。`moe` はentryの見出しと語義数だけの照合として残します。総合的な `verified` フラグはありません。
+
+`data/common/manifest.json` は形式名と版、件数、圧縮前後の大きさ、共通ファイルのSHA-256、変換元nativeファイルのSHA-256を持ちます。未知の版や件数・hashの不一致は、旧形式へ読み替えずエラーとして扱ってください。
 
 ### 圧縮の形
 
@@ -379,7 +391,7 @@ HSK には 2.0（6級まで）と 3.0（7級まで）の2つの版がありま�
 
 ## Swiftから使う
 
-SwiftPMのpackageとして参照できます。中日のデータと `manifest.json` が同梱されます（日中は含みません）。
+SwiftPMのpackageとして参照できます。nativeと共通形式は別productなので、利用するほうだけをtargetの依存へ加えてください（日中は含みません）。
 
 タグはまだ発行していないので、取り込む commit を直接指定してください。
 
@@ -397,11 +409,20 @@ let compressed = try Data(contentsOf: entries!)
 let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 ```
 
+複数辞書を同じreaderで扱う場合は、共通形式だけを同梱する `ZhJaCommonData` を使います。
+
+```swift
+import ZhJaCommonData
+
+let entries = ZhJaCommonData.entriesURL()   // data/common/entries.jsonl.deflate
+let manifest = ZhJaCommonData.manifestURL() // data/common/manifest.json
+```
+
 ### アプリに組み込むときは、bundleを渡してください
 
 引数を省くと `Bundle.module` から探しますが、**これは `.app` の中では当てになりません**。SwiftPMが生成する探索先は2か所だけで、`.app` 直下と、ビルドした機械の絶対パスで焼き込まれた `.build` です。資源を `Contents/Resources/` へ収めるアプリでは前者に当たらず、**ビルドした機械では `.build` に当たって動いてしまいます**。配布先には `.build` が無いので、そこで初めて見つかりません。
 
-アプリ側で `ZhJaDictData.bundleName`（`zh-ja-dict_ZhJaDictData.bundle`）を手掛かりにbundleを解決し、渡してください。
+アプリ側で `ZhJaDictData.bundleName`（`zh-ja-dict_ZhJaDictData.bundle`）または `ZhJaCommonData.bundleName`（`zh-ja-dict_ZhJaCommonData.bundle`）を手掛かりにbundleを解決し、渡してください。
 
 ```swift
 let bundle = Bundle(url: appResources.appendingPathComponent(ZhJaDictData.bundleName))
@@ -424,6 +445,17 @@ $ python3 tools/validate_data.py --cedict-entries 124985
 ```
 
 違反が1件でもあれば終了コード1で終わります。GitHub Actions（`.github/workflows/validate.yml`）が push と pull request で同じコマンドを実行します。件数だけを見たいときは `--counts` を付けます。このときは違反があっても終了コード0で終わります。
+
+共通形式は次のCLIでnativeから再生成し、全entryをnativeへ逆投影して損失がないことを検査できます。どちらも追加のpackageやnetworkを使いません。
+
+```console
+$ python3 tools/export_common.py
+共通形式を書いた: 157,798 entries / 229,130 senses / .../data/common
+$ python3 tools/validate_common.py
+共通形式: 157,798 entries / 229,130 senses / 229,130 translations / 違反0件
+```
+
+検査対象には、形式名と版、件数、圧縮前後の大きさ、hash、IDの重複、全native属性、語義と訳の順序、検品記録の意味が含まれます。20件・100件の試行には両CLIの `--limit` を使えます。
 
 このスクリプトが調べるのは次の点です。圧縮の流れが最後まで在るか。JSONとして読めるか。キーの構成が上の表と合っているか。**(簡体字, 繁体字, 読み) の3つ組が重複していないか**。HSKの級が範囲内か。品詞・`misc`・`qa`・`src`・`seed`・`moe`・参照の `kind` が仕様の値だけか。読みがピンインとして書けているか。訳文に別の言語が紛れ込んでいないか。`manifest.json` の件数・大きさ・出どころの表が実ファイルと合っているか。骨格 entry の数が CC-CEDICT の entry 数（`--cedict-entries`）と合っているか。
 
@@ -473,7 +505,7 @@ python3 tools/run_ja_shards.py --mode merge --dir tmp/ja-full --out tmp/ja-full.
 python3 tools/run_ja_shards.py --mode verify --full tmp/entries-base.jsonl \
     --out tmp/ja-full.jsonl --targets tmp/ja-full/targets.txt
 
-# 3. 訳を入れ、萌典と突き合わせ、圧縮して data/ を書く
+# 3. 訳を入れ、萌典と突き合わせ、nativeと共通形式を data/ へ書く
 python3 tools/build_dataset.py \
     --base tmp/entries-base.jsonl --glosses tmp/ja-full.jsonl \
     --repaired tmp/ja-full.jsonl.repaired \
@@ -482,6 +514,7 @@ python3 tools/build_dataset.py \
 # 4. 全件検査。旧版と HSK の元データを渡すと、取りこぼしまで見る
 python3 tools/validate_data.py --cedict-entries 124985 \
     --existing <旧版の glosses.jsonl> --hsk-seed <hsk-seed.json>
+python3 tools/validate_common.py
 ```
 
 同じ入力からは同じバイト列が出ます。

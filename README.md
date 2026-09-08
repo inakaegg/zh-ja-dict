@@ -20,6 +20,7 @@ How a Japanese gloss was produced varies by sense. The total is 229,130.
 See [What qa means](#what-qa-means) for how each group was checked.
 
 - zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,424,431 bytes compressed, 34,405,030 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
+- `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses in the format shared by multiple dictionaries, without dropping native data
 - One zh→ja line is **one entry**, unique by the triple (simplified, traditional, reading)
 - **The zh→ja file ships compressed** as raw DEFLATE (RFC 1951). See [How it is compressed](#how-it-is-compressed)
 - Senses have been checked to different degrees. The `qa` field tells them apart
@@ -30,9 +31,10 @@ See [What qa means](#what-qa-means) for how each group was checked.
 | File | Direction | Lines | Senses | Content |
 |---|---|---|---|---|
 | `data/zh-ja/entries.jsonl.deflate` | zh→ja | 157,798 | 229,130 | A short Japanese gloss per sense, with the English sense, pinyin, measure words and register labels |
+| `data/common/entries.jsonl.deflate` | zh→ja | 157,798 | 229,130 | The same zh→ja data in common dictionary format v1, retaining native attributes and check records |
 | `data/ja-zh/glosses.jsonl` | ja→zh | 40,000 | — | Chinese translations with pinyin, one line per word |
 
-There is also `data/manifest.json` (see [manifest.json](#manifestjson)).
+There is a native `data/manifest.json` and a common-format `data/common/manifest.json` (see [manifest.json](#manifestjson)).
 
 There are two kinds of zh→ja entry.
 
@@ -46,6 +48,16 @@ The supplement has two parts: **31,874 words CC-CEDICT has no headword for**, an
 The supplement exists because CC-CEDICT does not list every word and reading that appears in real text. The previous version chose its headwords from a word-segmentation dictionary (cppjieba), so it holds about 30,000 ordinary words CC-CEDICT lacks — `运输机` (transport aircraft), `身旁` (beside), `三合板` (plywood). Dropping them lowers the share of words in running text that can be looked up, so they are kept as entries carrying the previous version's gloss. **Supplement entries have no English senses.**
 
 ## Format
+
+### Common format v1 for applications
+
+`data/common/entries.jsonl.deflate` is a mechanical projection of the finalized native zh→ja data. It retains the native headwords, readings, HSK levels, senses, translations, notes and array order, split between common fields and `extensions.zh-ja-dict`. The native files remain available for compatibility and are not changed by this projection.
+
+A common entry has `id`, `headwords`, `readings`, `levels`, `verification`, `extensions` and `senses`. Its ID includes `(word, trad, pinyin)`, so entries that share a headword and reading but differ in traditional spelling are not merged. Each sense places CC-CEDICT English text in `glosses` and the current Japanese gloss in `translations`.
+
+How a translation was obtained is recorded under `provenance`; what was checked is kept separately under `verification`. `machine_backed` records that the previous version reported a string overlap with a dictionary resource. It does not assert that the sense meaning was verified. `derived` receives no semantic-review record. `moe` remains an entry-level headword and sense-count comparison. There is no aggregate `verified` flag.
+
+`data/common/manifest.json` contains the format name and version, counts, compressed and expanded sizes, the common file's SHA-256, and the source native file's SHA-256. Treat unknown versions and count or hash mismatches as errors; do not reinterpret them as an old format.
 
 ### How it is compressed
 
@@ -379,7 +391,7 @@ All 11,470 upstream words are present as headwords in the new data; the 29 that 
 
 ## Using it from Swift
 
-The repository is a SwiftPM package. The zh→ja data and `manifest.json` are bundled (ja→zh is not).
+The repository is a SwiftPM package. Native and common data are separate products, so add only the one you use to your target (ja→zh is not bundled).
 
 No tag has been published yet, so pin the commit you want.
 
@@ -397,11 +409,20 @@ let compressed = try Data(contentsOf: entries!)
 let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 ```
 
+Use `ZhJaCommonData` when several dictionaries are read through the same reader. This product bundles only the common files.
+
+```swift
+import ZhJaCommonData
+
+let entries = ZhJaCommonData.entriesURL()   // data/common/entries.jsonl.deflate
+let manifest = ZhJaCommonData.manifestURL() // data/common/manifest.json
+```
+
 ### Pass a bundle when you ship it inside an app
 
 Omitting the argument falls back to `Bundle.module`, and **that is not reliable inside a `.app`**. SwiftPM generates only two search locations: next to the `.app`, and a `.build` path baked in as an absolute path on the build machine. An app that puts resources in `Contents/Resources/` misses the former and **hits `.build` on the build machine, so it appears to work**. On the target machine there is no `.build`, and only then does the lookup fail.
 
-Resolve the bundle yourself using `ZhJaDictData.bundleName` (`zh-ja-dict_ZhJaDictData.bundle`) and pass it in.
+Resolve the bundle yourself using `ZhJaDictData.bundleName` (`zh-ja-dict_ZhJaDictData.bundle`) or `ZhJaCommonData.bundleName` (`zh-ja-dict_ZhJaCommonData.bundle`) and pass it in.
 
 ```swift
 let bundle = Bundle(url: appResources.appendingPathComponent(ZhJaDictData.bundleName))
@@ -424,6 +445,17 @@ $ python3 tools/validate_data.py --cedict-entries 124985
 ```
 
 A single violation exits with status 1. GitHub Actions (`.github/workflows/validate.yml`) runs the same command on push and pull request. Pass `--counts` to see only the tallies; that always exits 0.
+
+The common format can be regenerated from native data and checked by projecting every entry back to native form. Neither command needs an extra package or network access.
+
+```console
+$ python3 tools/export_common.py
+共通形式を書いた: 157,798 entries / 229,130 senses / .../data/common
+$ python3 tools/validate_common.py
+共通形式: 157,798 entries / 229,130 senses / 229,130 translations / 違反0件
+```
+
+The checks cover the format name and version, counts, compressed and expanded sizes, hashes, duplicate IDs, every native attribute, sense and translation order, and the meaning assigned to check records. Use `--limit` with both commands for 20- and 100-entry pilots.
 
 The script checks: that the compressed stream is complete; that each line parses as JSON; that the keys match the tables above; that **(simplified, traditional, reading) triples do not repeat**; that HSK levels are in range; that parts of speech, `misc`, `qa`, `src`, `seed`, `moe` and cross-reference `kind`s hold only specified values; that readings are writable as pinyin; that no other language leaked into a gloss; that `manifest.json`'s counts, sizes and source table match the real files; and that the number of skeleton entries matches CC-CEDICT's entry count (`--cedict-entries`).
 
@@ -473,7 +505,7 @@ python3 tools/run_ja_shards.py --mode merge --dir tmp/ja-full --out tmp/ja-full.
 python3 tools/run_ja_shards.py --mode verify --full tmp/entries-base.jsonl \
     --out tmp/ja-full.jsonl --targets tmp/ja-full/targets.txt
 
-# 3. Merge the glosses, cross-check MoeDict, compress and write data/
+# 3. Merge the glosses, cross-check MoeDict, and write native and common data/
 python3 tools/build_dataset.py \
     --base tmp/entries-base.jsonl --glosses tmp/ja-full.jsonl \
     --repaired tmp/ja-full.jsonl.repaired \
@@ -482,6 +514,7 @@ python3 tools/build_dataset.py \
 # 4. Validate everything. Pass the previous version and the HSK seed to catch losses
 python3 tools/validate_data.py --cedict-entries 124985 \
     --existing <the previous glosses.jsonl> --hsk-seed <hsk-seed.json>
+python3 tools/validate_common.py
 ```
 
 The same inputs produce the same bytes.

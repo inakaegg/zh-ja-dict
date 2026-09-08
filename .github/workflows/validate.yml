@@ -30,3 +30,4 @@ jobs:
         run: |
           python3 tools/validate_data.py --cedict-entries 124985 \
             --existing /tmp/old-glosses.jsonl
+          python3 tools/validate_common.py

@@ -13,6 +13,10 @@ let package = Package(
         .library(
             name: "ZhJaDictData",
             targets: ["ZhJaDictData"]
+        ),
+        .library(
+            name: "ZhJaCommonData",
+            targets: ["ZhJaCommonData"]
         )
     ],
     targets: [
@@ -25,12 +29,25 @@ let package = Package(
         .target(
             name: "ZhJaDictData",
             path: "data",
-            exclude: ["ja-zh"],
+            exclude: ["ja-zh", "common"],
             sources: ["ZhJaDictData.swift"],
             resources: [
                 .copy("zh-ja"),
                 .copy("manifest.json")
             ]
+        ),
+        .target(
+            name: "ZhJaCommonData",
+            path: "data/common",
+            sources: ["ZhJaCommonData.swift"],
+            resources: [
+                .copy("entries.jsonl.deflate"),
+                .copy("manifest.json")
+            ]
+        ),
+        .testTarget(
+            name: "ZhJaCommonDataTests",
+            dependencies: ["ZhJaCommonData", "ZhJaDictData"]
         )
     ]
 )

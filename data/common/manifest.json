@@ -1,0 +1,55 @@
+{
+  "schema": {
+    "name": "learner-dictionary",
+    "version": 1
+  },
+  "dictionary": "zh-ja-dict",
+  "source_language": "zh",
+  "translation_languages": [
+    "ja"
+  ],
+  "generated": "2026-09-08",
+  "files": {
+    "entries.jsonl.deflate": {
+      "lines": 157798,
+      "senses": 229130,
+      "compression": "deflate",
+      "bytes": 13341798,
+      "uncompressed_bytes": 171591555,
+      "sha256": "a05946c092490cf839b4d7d95fc90746e76b9b6b058893ab4177a002465c7821"
+    }
+  },
+  "sources": {
+    "CC-CEDICT": {
+      "what": "中日の骨格。見出し（簡体・繁体）・読み・英語の語義・量詞・語感の注記",
+      "version": "2026-09-05",
+      "license": "CC BY-SA 4.0",
+      "by": "MDBG / CC-CEDICT"
+    },
+    "complete-hsk-vocabulary": {
+      "what": "HSK 2.0 / 3.0 の級と品詞。級と品詞だけを収録",
+      "license": "MIT",
+      "by": "drkameleon"
+    },
+    "cppjieba": {
+      "what": "訳を作る順番を決める内部の作業にだけ参照。頻度・順位は収録していない",
+      "license": "MIT",
+      "by": "yanyiwu"
+    },
+    "moedict": {
+      "what": "見出しと語義の数の突き合わせにだけ参照。本文は収録していない",
+      "version": "2026-09-06",
+      "license": "CC BY-ND 3.0 TW",
+      "by": "中華民國教育部（g0v が JSON 化）"
+    },
+    "zh-ja-dict": {
+      "what": "CC-CEDICT に無い語の補遺と、訳を作るときの候補。この辞書の旧版",
+      "license": "CC BY-SA 4.0",
+      "by": "zh-ja-dict"
+    }
+  },
+  "source_artifact": {
+    "schema_version": 3,
+    "sha256": "d3ec3d1f5a3b2416f1bad2e553e8003bda0286c02ba9f41d1af2b8d95636a06c"
+  }
+}
