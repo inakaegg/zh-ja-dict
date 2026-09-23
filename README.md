@@ -20,7 +20,8 @@ How a Japanese gloss was produced varies by sense. The total is 229,130.
 See [What qa means](#what-qa-means) for how each group was checked.
 
 - zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,424,431 bytes compressed, 34,405,030 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
-- `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses in the format shared by multiple dictionaries, without dropping native data
+- `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses as common format v2 for auditing and SQLite generation
+- `data/common/dictionary.sqlite3` is the corresponding 71,471,104-byte searchable SQLite artifact for applications. The audit JSONL is not bundled into applications
 - One zh→ja line is **one entry**, unique by the triple (simplified, traditional, reading)
 - **The zh→ja file ships compressed** as raw DEFLATE (RFC 1951). See [How it is compressed](#how-it-is-compressed)
 - Senses have been checked to different degrees. The `qa` field tells them apart
@@ -31,10 +32,11 @@ See [What qa means](#what-qa-means) for how each group was checked.
 | File | Direction | Lines | Senses | Content |
 |---|---|---|---|---|
 | `data/zh-ja/entries.jsonl.deflate` | zh→ja | 157,798 | 229,130 | A short Japanese gloss per sense, with the English sense, pinyin, measure words and register labels |
-| `data/common/entries.jsonl.deflate` | zh→ja | 157,798 | 229,130 | The same zh→ja data in common dictionary format v1, retaining native attributes and check records |
+| `data/common/entries.jsonl.deflate` | zh→ja | 157,798 | 229,130 | Audit data in common dictionary format v2, retaining each required attribute and check record in one place |
+| `data/common/dictionary.sqlite3` | zh→ja | 157,798 | 229,130 | SQLite used by the common reader to fetch only the entries an application needs; bundled in the common product |
 | `data/ja-zh/glosses.jsonl` | ja→zh | 40,000 | — | Chinese translations with pinyin, one line per word |
 
-There is a native `data/manifest.json` and a common-format `data/common/manifest.json` (see [manifest.json](#manifestjson)).
+There is a native `data/manifest.json`, an audit `data/common/manifest.json`, and a SQLite `data/common/dictionary-db-manifest.json` (see [manifest.json](#manifestjson)).
 
 There are two kinds of zh→ja entry.
 
@@ -49,15 +51,15 @@ The supplement exists because CC-CEDICT does not list every word and reading tha
 
 ## Format
 
-### Common format v1 for applications
+### Common format v2 for applications
 
-`data/common/entries.jsonl.deflate` is a mechanical projection of the finalized native zh→ja data. It retains the native headwords, readings, HSK levels, senses, translations, notes and array order, split between common fields and `extensions.zh-ja-dict`. The native files remain available for compatibility and are not changed by this projection.
+`data/common/entries.jsonl.deflate` is an audit artifact generated mechanically from the finalized native zh→ja data. It retains headwords, readings, HSK levels, senses, translations, notes and meaningful array order. Values moved to common fields are not copied into `extensions.zh-ja-dict`; extensions contain only information without a dedicated common field, such as classifiers, parts of speech, seed history, register notes and cross-references. Native files remain available for compatibility, but v2 is not designed to reproduce their serialization.
 
 A common entry has `id`, `headwords`, `readings`, `levels`, `verification`, `extensions` and `senses`. Its ID includes `(word, trad, pinyin)`, so entries that share a headword and reading but differ in traditional spelling are not merged. Each sense places CC-CEDICT English text in `glosses` and the current Japanese gloss in `translations`.
 
-How a translation was obtained is recorded under `provenance`; what was checked is kept separately under `verification`. `machine_backed` records that the previous version reported a string overlap with a dictionary resource. It does not assert that the sense meaning was verified. `derived` receives no semantic-review record. `moe` remains an entry-level headword and sense-count comparison. There is no aggregate `verified` flag.
+How a translation was obtained is recorded under `provenance`; what was checked is kept separately under `verification`. The original `qa` value appears once as `provenance.source_value`, not as a duplicate in verification. `machine_backed` records that the previous version reported a string overlap with a dictionary resource. It does not assert that the sense meaning was verified. `derived` receives no semantic-review record. `moe` remains once as the result of an entry-level headword and sense-count comparison. There is no aggregate `verified` flag.
 
-`data/common/manifest.json` contains the format name and version, counts, compressed and expanded sizes, the common file's SHA-256, and the source native file's SHA-256. Treat unknown versions and count or hash mismatches as errors; do not reinterpret them as an old format.
+`data/common/manifest.json` contains the format name and version, counts, compressed and expanded sizes, the common file's SHA-256, and the source native file's SHA-256. The shared builder turns this audit JSONL into `data/common/dictionary.sqlite3` and `data/common/dictionary-db-manifest.json`. The latter fixes the hashes of the SQLite file and both source artifacts, the counts, and the payload encoding. Treat unknown versions and count or hash mismatches as errors; do not reinterpret them as an old format.
 
 ### How it is compressed
 
@@ -409,13 +411,13 @@ let compressed = try Data(contentsOf: entries!)
 let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 ```
 
-Use `ZhJaCommonData` when several dictionaries are read through the same reader. This product bundles only the common files.
+Use `ZhJaCommonData` when several dictionaries are read through the same reader. This product bundles only the searchable SQLite file and its DB manifest; the audit `entries.jsonl.deflate` and `manifest.json` are excluded.
 
 ```swift
 import ZhJaCommonData
 
-let entries = ZhJaCommonData.entriesURL()   // data/common/entries.jsonl.deflate
-let manifest = ZhJaCommonData.manifestURL() // data/common/manifest.json
+let database = ZhJaCommonData.databaseURL()                 // dictionary.sqlite3
+let manifest = ZhJaCommonData.databaseManifestURL()         // dictionary-db-manifest.json
 ```
 
 ### Pass a bundle when you ship it inside an app
@@ -446,16 +448,25 @@ $ python3 tools/validate_data.py --cedict-entries 124985
 
 A single violation exits with status 1. GitHub Actions (`.github/workflows/validate.yml`) runs the same command on push and pull request. Pass `--counts` to see only the tallies; that always exits 0.
 
-The common format can be regenerated from native data and checked by projecting every entry back to native form. Neither command needs an extra package or network access.
+The audit form can be regenerated from native data and checked to ensure that every native attribute has its single v2 destination and that meaningful candidate, sense and translation order is unchanged. The shared `GlossDataAudit` CLI then builds the application SQLite file. None of these operations uses the network.
+Before building SQLite, place a `zh-base` checkout containing builder commit `6f1f116` in the sibling `../zh-base` directory, then run `(cd ../zh-base && tools/build-xcframework.sh)`. This commit is currently local; a fresh clone of the published branch does not yet contain the builder.
 
 ```console
 $ python3 tools/export_common.py
 共通形式を書いた: 157,798 entries / 229,130 senses / .../data/common
+$ swift run --package-path ../zh-base GlossDataAudit build-common-db \
+    --entries data/common/entries.jsonl.deflate \
+    --manifest data/common/manifest.json \
+    --output data/common/dictionary.sqlite3 \
+    --output-manifest data/common/dictionary-db-manifest.json
 $ python3 tools/validate_common.py
 共通形式: 157,798 entries / 229,130 senses / 229,130 translations / 違反0件
+$ swift run --package-path ../zh-base GlossDataAudit verify-common-db \
+    --database data/common/dictionary.sqlite3 \
+    --manifest data/common/dictionary-db-manifest.json
 ```
 
-The checks cover the format name and version, counts, compressed and expanded sizes, hashes, duplicate IDs, every native attribute, sense and translation order, and the meaning assigned to check records. Use `--limit` with both commands for 20- and 100-entry pilots.
+The checks cover the format name and version, counts, compressed and expanded sizes, hashes, duplicate IDs, the destination of every native attribute, sense and translation order, the meaning assigned to check records, and rejection of unknown attributes. They do not reconstruct missing keys or numeric types from the old serialization. Use `--limit` with both commands for 20- and 100-entry pilots.
 
 The script checks: that the compressed stream is complete; that each line parses as JSON; that the keys match the tables above; that **(simplified, traditional, reading) triples do not repeat**; that HSK levels are in range; that parts of speech, `misc`, `qa`, `src`, `seed`, `moe` and cross-reference `kind`s hold only specified values; that readings are writable as pinyin; that no other language leaked into a gloss; that `manifest.json`'s counts, sizes and source table match the real files; and that the number of skeleton entries matches CC-CEDICT's entry count (`--cedict-entries`).
 
@@ -502,6 +513,9 @@ python3 tools/run_ja_shards.py --mode plan --full tmp/entries-base.jsonl \
 python3 tools/run_ja_shards.py --mode run --full tmp/entries-base.jsonl \
     --targets tmp/ja-full/targets.txt --dir tmp/ja-full --shards 8
 python3 tools/run_ja_shards.py --mode merge --dir tmp/ja-full --out tmp/ja-full.jsonl
+# Repair only script/length failures and keep their IDs in the adjacent .repaired file
+python3 tools/generate_ja.py --full tmp/entries-base.jsonl \
+    --only tmp/ja-full/targets.txt --out tmp/ja-full.jsonl --repair
 python3 tools/run_ja_shards.py --mode verify --full tmp/entries-base.jsonl \
     --out tmp/ja-full.jsonl --targets tmp/ja-full/targets.txt
 
@@ -514,7 +528,16 @@ python3 tools/build_dataset.py \
 # 4. Validate everything. Pass the previous version and the HSK seed to catch losses
 python3 tools/validate_data.py --cedict-entries 124985 \
     --existing <the previous glosses.jsonl> --hsk-seed <hsk-seed.json>
+# 5. Build the SQLite artifact bundled with applications from the common data
+swift run --package-path ../zh-base GlossDataAudit build-common-db \
+    --entries data/common/entries.jsonl.deflate \
+    --manifest data/common/manifest.json \
+    --output data/common/dictionary.sqlite3 \
+    --output-manifest data/common/dictionary-db-manifest.json
 python3 tools/validate_common.py
+swift run --package-path ../zh-base GlossDataAudit verify-common-db \
+    --database data/common/dictionary.sqlite3 \
+    --manifest data/common/dictionary-db-manifest.json
 ```
 
 The same inputs produce the same bytes.

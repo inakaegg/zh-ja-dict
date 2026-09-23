@@ -7,14 +7,19 @@ final class ZhJaCommonDataTests: XCTestCase {
     func testCommonProductFindsOnlyCommonResources() throws {
         XCTAssertEqual(ZhJaCommonData.bundleName, "zh-ja-dict_ZhJaCommonData.bundle")
 
-        let entries = try XCTUnwrap(ZhJaCommonData.entriesURL())
-        let manifest = try XCTUnwrap(ZhJaCommonData.manifestURL())
-        XCTAssertEqual(entries.lastPathComponent, "entries.jsonl.deflate")
-        XCTAssertEqual(manifest.lastPathComponent, "manifest.json")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: entries.path))
+        let database = try XCTUnwrap(ZhJaCommonData.databaseURL())
+        let manifest = try XCTUnwrap(ZhJaCommonData.databaseManifestURL())
+        XCTAssertEqual(database.lastPathComponent, "dictionary.sqlite3")
+        XCTAssertEqual(manifest.lastPathComponent, "dictionary-db-manifest.json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: database.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: manifest.path))
+        let resourceDirectory = database.deletingLastPathComponent()
         XCTAssertFalse(FileManager.default.fileExists(
-            atPath: entries.deletingLastPathComponent().appendingPathComponent("zh-ja").path))
+            atPath: resourceDirectory.appendingPathComponent("entries.jsonl.deflate").path))
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: resourceDirectory.appendingPathComponent("manifest.json").path))
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: resourceDirectory.appendingPathComponent("zh-ja").path))
     }
 
     func testNativeProductStillFindsNativeResources() throws {

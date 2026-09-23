@@ -31,3 +31,6 @@ jobs:
           python3 tools/validate_data.py --cedict-entries 124985 \
             --existing /tmp/old-glosses.jsonl
           python3 tools/validate_common.py
+      # common productがSQLiteとDB manifestだけを同梱し、native productを保つことを確かめる。
+      - name: Swift packageを検証する
+        run: swift test

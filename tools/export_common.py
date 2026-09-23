@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""確定済み中日nativeデータを共通辞書形式v1へ変換する。"""
+"""確定済み中日nativeデータを監査用の共通辞書形式v2へ変換する。"""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="中日nativeデータから共通辞書形式v1を作る")
+    parser = argparse.ArgumentParser(description="中日nativeデータから共通辞書形式v2を作る")
     parser.add_argument(
         "--native-entries", type=pathlib.Path,
         default=REPO_ROOT / "data" / "zh-ja" / entries_file.NAME)

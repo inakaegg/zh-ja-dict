@@ -39,10 +39,11 @@ let package = Package(
         .target(
             name: "ZhJaCommonData",
             path: "data/common",
+            exclude: ["entries.jsonl.deflate", "manifest.json"],
             sources: ["ZhJaCommonData.swift"],
             resources: [
-                .copy("entries.jsonl.deflate"),
-                .copy("manifest.json")
+                .copy("dictionary.sqlite3"),
+                .copy("dictionary-db-manifest.json")
             ]
         ),
         .testTarget(

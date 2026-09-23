@@ -1,7 +1,7 @@
 {
   "schema": {
     "name": "learner-dictionary",
-    "version": 1
+    "version": 2
   },
   "dictionary": "zh-ja-dict",
   "source_language": "zh",
@@ -14,9 +14,9 @@
       "lines": 157798,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 13341798,
-      "uncompressed_bytes": 171591555,
-      "sha256": "a05946c092490cf839b4d7d95fc90746e76b9b6b058893ab4177a002465c7821"
+      "bytes": 10409935,
+      "uncompressed_bytes": 137509415,
+      "sha256": "d0d14f8b2a25b7177b62422bae1deedc3a7d39b23c4935c912462b8cb3abfdcb"
     }
   },
   "sources": {

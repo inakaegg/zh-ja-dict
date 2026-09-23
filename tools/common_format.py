@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""zh-ja-dict schema 3 と共通辞書形式v1の相互変換・検査。"""
+"""zh-ja-dict schema 3 から共通辞書形式v2への変換・情報保存検査。"""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ import itertools
 import json
 import os
 import pathlib
+import sqlite3
+import zlib
 from collections import OrderedDict
 from typing import NamedTuple, Optional
 
@@ -16,7 +18,7 @@ import entries_file
 
 
 SCHEMA_NAME = "learner-dictionary"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DICTIONARY = "zh-ja-dict"
 SOURCE_LANGUAGE = "zh"
 TRANSLATION_LANGUAGES = ["ja"]
@@ -29,6 +31,8 @@ NATIVE_ENTRY_KEYS = ("word", "trad", "pinyin", "tw_pr", "also_pr", "cl",
                      "hsk2", "hsk3", "pos", "src", "seed", "moe", "senses")
 NATIVE_SENSE_KEYS = ("en", "ja", "qa", "unsure", "misc", "variant_of",
                      "see_also", "lsource", "s_inf")
+ENTRY_EXTENSION_KEYS = ("cl", "pos", "seed")
+SENSE_EXTENSION_KEYS = ("misc", "variant_of", "see_also", "lsource", "s_inf")
 
 
 class CommonFormatError(ValueError):
@@ -123,7 +127,7 @@ def _entry_verification(entry: dict) -> list:
         return []
     if moe not in {"full", "headword", "none"}:
         raise CommonFormatError(f"{entry['word']}: moeが想定外: {moe!r}")
-    return [_evidence("entry_headword_and_sense_count", "moedict_crosscheck", moe, moe)]
+    return [_evidence("entry_headword_and_sense_count", "moedict_crosscheck", moe)]
 
 
 def _provenance(entry: dict, sense: dict) -> OrderedDict:
@@ -154,7 +158,7 @@ def _translation_verification(entry: dict, sense: dict) -> list:
     qa = sense["qa"]
     if entry.get("src") != "zh-ja-dict":
         if qa in {"llm_ok", "llm_fixed", "hand_fixed"}:
-            return [_evidence("translation", "script_and_length", "passed", qa)]
+            return [_evidence("translation", "script_and_length", "passed")]
         if qa == "derived":
             return []
         raise CommonFormatError(
@@ -172,7 +176,7 @@ def _translation_verification(entry: dict, sense: dict) -> list:
     if mapped is None:
         raise CommonFormatError(
             f"{entry['word']}: 補遺entryのqa組合せが共通形式で未定義: {qa!r}")
-    return [_evidence(*mapped, source_value=qa)]
+    return [_evidence(*mapped)]
 
 
 def _common_id(entry: dict) -> OrderedDict:
@@ -217,6 +221,14 @@ def _levels(entry: dict) -> list:
     return values
 
 
+def _namespaced_extension(value: dict, keys: tuple[str, ...]) -> OrderedDict:
+    retained = OrderedDict(
+        (key, copy.deepcopy(value[key])) for key in keys if key in value)
+    if not retained:
+        return OrderedDict()
+    return OrderedDict([(EXTENSION_KEY, retained)])
+
+
 def _common_sense(entry: dict, sense: dict) -> OrderedDict:
     if not isinstance(sense, dict):
         raise CommonFormatError(f"{entry['word']}: native senseがobjectでない")
@@ -230,8 +242,6 @@ def _common_sense(entry: dict, sense: dict) -> OrderedDict:
     if not isinstance(english, list) or any(not isinstance(item, str) for item in english):
         raise CommonFormatError(f"{entry['word']}: sense.enが文字列配列でない")
     glosses = [OrderedDict([("language", "en"), ("text", item)]) for item in english]
-    extension = OrderedDict(
-        (key, copy.deepcopy(value)) for key, value in sense.items() if key != "ja")
     translation = OrderedDict([
         ("language", "ja"),
         ("text", text),
@@ -242,7 +252,7 @@ def _common_sense(entry: dict, sense: dict) -> OrderedDict:
     return OrderedDict([
         ("glosses", glosses),
         ("translations", [translation]),
-        ("extensions", OrderedDict([(EXTENSION_KEY, extension)])),
+        ("extensions", _namespaced_extension(sense, SENSE_EXTENSION_KEYS)),
     ])
 
 
@@ -252,8 +262,6 @@ def to_common_entry(entry: dict) -> OrderedDict:
     source = entry.get("src")
     if source is not None and source != "zh-ja-dict":
         raise CommonFormatError(f"{entry['word']}: srcが想定外: {source!r}")
-    extension = OrderedDict(
-        (key, copy.deepcopy(value)) for key, value in entry.items() if key != "senses")
     senses = [_common_sense(entry, sense) for sense in entry["senses"]]
     return OrderedDict([
         ("id", _common_id(entry)),
@@ -261,49 +269,18 @@ def to_common_entry(entry: dict) -> OrderedDict:
         ("readings", _readings(entry)),
         ("levels", _levels(entry)),
         ("verification", _entry_verification(entry)),
-        ("extensions", OrderedDict([(EXTENSION_KEY, extension)])),
+        ("extensions", _namespaced_extension(entry, ENTRY_EXTENSION_KEYS)),
         ("senses", senses),
     ])
 
 
-def project_native_entry(entry: dict) -> OrderedDict:
-    """共通entryのnative拡張からschema 3を復元する。"""
-    try:
-        extension = entry["extensions"][EXTENSION_KEY]
-        common_senses = entry["senses"]
-    except (KeyError, TypeError) as error:
-        raise CommonFormatError("共通entryのextensionsまたはsensesが不正") from error
-    if not isinstance(extension, dict) or not isinstance(common_senses, list):
-        raise CommonFormatError("共通entryのnative extensionまたはsensesが不正")
-
-    native = OrderedDict()
-    for key in NATIVE_ENTRY_KEYS:
-        if key == "senses":
-            continue
-        if key in extension:
-            native[key] = copy.deepcopy(extension[key])
-    native_senses = []
-    for common_sense in common_senses:
-        try:
-            native_extension = common_sense["extensions"][EXTENSION_KEY]
-            translations = common_sense["translations"]
-        except (KeyError, TypeError) as error:
-            raise CommonFormatError("共通senseのnative extensionまたはtranslationsが不正") from error
-        if not isinstance(native_extension, dict) or not isinstance(translations, list) \
-                or len(translations) != 1 or not isinstance(translations[0], dict):
-            raise CommonFormatError("共通senseのnative extensionまたはtranslation件数が不正")
-        translation = translations[0]
-        if translation.get("language") != "ja" or not isinstance(translation.get("text"), str):
-            raise CommonFormatError("共通translationの言語または本文が不正")
-        native_sense = OrderedDict()
-        for key in NATIVE_SENSE_KEYS:
-            if key == "ja":
-                native_sense[key] = translation["text"]
-            elif key in native_extension:
-                native_sense[key] = copy.deepcopy(native_extension[key])
-        native_senses.append(native_sense)
-    native["senses"] = native_senses
-    return native
+def check_information_preserved(native: dict, common: dict,
+                                number: Optional[int] = None) -> None:
+    """nativeの各属性がv2で定めた唯一の保存先と一致することを確認する。"""
+    expected = to_common_entry(native)
+    if common != expected:
+        where = f" {number}" if number is not None else ""
+        raise CommonFormatError(f"共通entry{where}の情報保存対応がnativeと違う")
 
 
 def _json_lines(entries: pathlib.Path, counters: dict, seen: set,
@@ -486,12 +463,116 @@ def _artifact_counts(path: pathlib.Path, label: str) -> tuple[int, int]:
     return entries, senses
 
 
+def _check_database_pair(common_entries: pathlib.Path, common_manifest: pathlib.Path) -> None:
+    directory = common_entries.parent
+    database = directory / "dictionary.sqlite3"
+    sidecar = directory / "dictionary-db-manifest.json"
+    if database.exists() != sidecar.exists():
+        raise CommonFormatError("SQLiteとDB manifestは両方必要")
+    if not database.exists():
+        return
+    metadata = _load_json(sidecar, "DB manifest")
+    expected = {
+        "source_entries_sha256": sha256_file(common_entries),
+        "source_manifest_sha256": sha256_file(common_manifest),
+        "file_sha256": sha256_file(database),
+        "file_bytes": database.stat().st_size,
+    }
+    if any(metadata.get(key) != value for key, value in expected.items()):
+        raise CommonFormatError("SQLiteと共通JSONL/manifestの生成元または内容が一致しない")
+    common_meta = _load_json(common_manifest, "共通manifest")
+    common_counts = common_meta["files"][entries_file.NAME]
+    if (metadata.get("dictionary"), metadata.get("entry_count"), metadata.get("sense_count"),
+            metadata.get("payload_encoding")) != (
+        common_meta["dictionary"], common_counts["lines"], common_counts["senses"], "deflate-raw"
+    ):
+        raise CommonFormatError("DB manifestの辞書・件数・圧縮形式が共通manifestと違う")
+    try:
+        with sqlite3.connect(database.resolve().as_uri() + "?mode=ro&immutable=1", uri=True) as connection:
+            if connection.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+                raise CommonFormatError("SQLiteのintegrity_checkに失敗")
+            if connection.execute("PRAGMA user_version").fetchone() != (2,):
+                raise CommonFormatError("SQLiteのschema versionが不正")
+            tables = {row[0] for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'")}
+            if not {"dictionary_meta", "entries", "lookup_keys", "shared_values"} <= tables:
+                raise CommonFormatError("SQLiteのtableが不足")
+            row = connection.execute("""
+                SELECT dictionary,entry_count,sense_count,source_manifest_sha256,
+                       source_entries_sha256,payload_encoding
+                FROM dictionary_meta WHERE singleton=1
+            """).fetchone()
+            if row != (
+                metadata.get("dictionary"), metadata.get("entry_count"),
+                metadata.get("sense_count"), metadata["source_manifest_sha256"],
+                metadata["source_entries_sha256"], metadata.get("payload_encoding"),
+            ):
+                raise CommonFormatError("SQLiteのmetadataがDB manifestと違う")
+            if connection.execute(
+                "SELECT COUNT(*), COALESCE(SUM(sense_count),0) FROM entries"
+            ).fetchone() != (metadata.get("entry_count"), metadata.get("sense_count")):
+                raise CommonFormatError("SQLiteのentry/sense件数がDB manifestと違う")
+            if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                raise CommonFormatError("SQLiteの参照整合性が不正")
+            for (payload,) in connection.execute(
+                "SELECT payload FROM entries WHERE ordinal IN (0, ?)",
+                (metadata["entry_count"] - 1,),
+            ):
+                value = json.loads(zlib.decompress(payload, -15))
+                if not isinstance(value, dict) or not isinstance(value.get("senses"), list):
+                    raise CommonFormatError("SQLiteのentry payloadが不正")
+            shared = {
+                identifier: (kind, json.loads(value))
+                for identifier, kind, value in connection.execute(
+                    "SELECT id,kind,json FROM shared_values")
+            }
+
+            def restore(value: object, kind: str) -> object:
+                if not isinstance(value, dict) or "$shared" not in value:
+                    return value
+                identifier = value.get("$shared")
+                if (set(value) != {"$shared"} or type(identifier) is not int
+                        or identifier not in shared or shared[identifier][0] != kind):
+                    raise CommonFormatError("SQLiteの共有値参照が不正")
+                return shared[identifier][1]
+
+            source_rows = (json.loads(line) for line in entries_file.read_lines(common_entries))
+            stored_rows = connection.execute(
+                "SELECT ordinal,id_source,id_value,sense_count,payload FROM entries ORDER BY ordinal")
+            missing = object()
+            for ordinal, (source, stored) in enumerate(
+                itertools.zip_longest(source_rows, stored_rows, fillvalue=missing)
+            ):
+                if source is missing or stored is missing:
+                    raise CommonFormatError("SQLiteと共通JSONLのentry件数が違う")
+                position, id_source, id_value, sense_count, payload = stored
+                entry = json.loads(zlib.decompress(payload, -15))
+                if "verification" in entry:
+                    entry["verification"] = restore(entry["verification"], "entry.verification")
+                for sense in entry["senses"]:
+                    for translation in sense["translations"]:
+                        for field in ("verification", "provenance"):
+                            if field in translation:
+                                translation[field] = restore(
+                                    translation[field], f"translation.{field}")
+                if (position != ordinal or id_source != source["id"]["source"]
+                        or id_value != source["id"]["value"]
+                        or sense_count != len(source["senses"])
+                        or json.dumps(entry, sort_keys=True, ensure_ascii=False)
+                        != json.dumps(source, sort_keys=True, ensure_ascii=False)):
+                    raise CommonFormatError(f"SQLiteのentryが共通JSONLと違う: ordinal={ordinal}")
+    except (sqlite3.Error, zlib.error, json.JSONDecodeError, KeyError, TypeError,
+            AttributeError) as error:
+        raise CommonFormatError(f"SQLiteの内容を読めない: {error}") from error
+
+
 def validate_common(common_entries: pathlib.Path, common_manifest: pathlib.Path,
                     native_entries: pathlib.Path, native_manifest: pathlib.Path,
                     limit: Optional[int] = None) -> ValidationStats:
-    """manifest、共通行、nativeへの逆投影をstreamingで全件検査する。"""
+    """manifestと、nativeから共通v2への情報保存対応をstreamingで検査する。"""
     common_entries = pathlib.Path(common_entries)
     common_manifest = pathlib.Path(common_manifest)
+    _check_database_pair(common_entries, common_manifest)
     native_entries = pathlib.Path(native_entries)
     native_manifest = pathlib.Path(native_manifest)
     if limit is not None and limit <= 0:
@@ -542,16 +623,11 @@ def validate_common(common_entries: pathlib.Path, common_manifest: pathlib.Path,
         except json.JSONDecodeError as error:
             raise CommonFormatError(f"entry {number}がJSONでない: {error}") from error
         _check_key_order(common, number)
-        expected = to_common_entry(native)
-        if common != expected:
-            raise CommonFormatError(f"共通entry {number}がnativeからの決定的変換と違う")
+        check_information_preserved(native, common, number=number)
         identity = (common["id"]["source"], common["id"]["value"])
         if identity in seen:
             raise CommonFormatError(f"共通entry {number}のIDが重複: {identity!r}")
         seen.add(identity)
-        projected = project_native_entry(common)
-        if projected != native:
-            raise CommonFormatError(f"共通entry {number}をnativeへ逆投影すると差がある")
         entries += 1
         senses += len(common["senses"])
         translations += sum(len(sense["translations"]) for sense in common["senses"])

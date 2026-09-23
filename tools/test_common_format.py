@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""共通辞書形式への変換と逆投影の試験。"""
+"""共通辞書形式v2への変換と情報保存の試験。"""
 
 from __future__ import annotations
 
 import copy
 import json
 import pathlib
+import sqlite3
 import sys
 import tempfile
 import unittest
+import zlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import common_format  # noqa: E402
@@ -25,7 +27,13 @@ def sample_rows(count: int) -> list[dict]:
             "moe": "full",
             "senses": [
                 {"en": ["computer"], "ja": "コンピュータ", "qa": "llm_ok"},
-                {"en": ["calculator"], "ja": "電卓", "qa": "llm_fixed", "misc": ["tw"]},
+                {
+                    "en": ["calculator"], "ja": "電卓", "qa": "llm_fixed",
+                    "misc": ["tw"],
+                    "see_also": [{"kind": "abbr", "w": "电子计算机",
+                                  "t": "電子計算機", "py": "dian4 zi3 ji4 suan4 ji1"}],
+                    "lsource": ['"calculator"'], "s_inf": ["fixture note"],
+                },
             ],
         },
         {
@@ -114,26 +122,139 @@ class CommonFixture(unittest.TestCase):
         native, common, stats, *_ = self.export(20)
         self.assertEqual(stats.entries, 20)
         self.assertEqual(stats.senses, 21)
+        self.assertEqual(common[0], {
+            "id": {"source": "zh-ja-dict",
+                   "value": '["计算机","計算機","jì suàn jī"]'},
+            "headwords": [
+                {"text": "计算机", "kind": "primary"},
+                {"text": "計算機", "kind": "traditional"},
+            ],
+            "readings": [
+                {"text": "jì suàn jī", "system": "pinyin", "kind": "primary"},
+                {"text": "jì suàn jī", "system": "pinyin", "kind": "taiwan"},
+                {"text": "jì suàn jī", "system": "pinyin", "kind": "alternate"},
+            ],
+            "levels": [
+                {"system": "HSK", "version": "2.0", "value": "5"},
+                {"system": "HSK", "version": "3.0", "value": "2"},
+            ],
+            "verification": [{
+                "subject": "entry_headword_and_sense_count",
+                "method": "moedict_crosscheck", "result": "full",
+            }],
+            "extensions": {"zh-ja-dict": {
+                "cl": [{"w": "台", "t": "臺", "py": "tai2"}],
+                "pos": ["n"], "seed": "machine_backed",
+            }},
+            "senses": [
+                {
+                    "glosses": [{"language": "en", "text": "computer"}],
+                    "translations": [{
+                        "language": "ja", "text": "コンピュータ",
+                        "provenance": {"method": "llm", "source": "zh-ja-dict",
+                                       "source_value": "llm_ok"},
+                        "verification": [{"subject": "translation",
+                                          "method": "script_and_length",
+                                          "result": "passed"}],
+                        "uncertain": False,
+                    }],
+                    "extensions": {},
+                },
+                {
+                    "glosses": [{"language": "en", "text": "calculator"}],
+                    "translations": [{
+                        "language": "ja", "text": "電卓",
+                        "provenance": {"method": "llm", "source": "zh-ja-dict",
+                                       "source_value": "llm_fixed"},
+                        "verification": [{"subject": "translation",
+                                          "method": "script_and_length",
+                                          "result": "passed"}],
+                        "uncertain": False,
+                    }],
+                    "extensions": {"zh-ja-dict": {
+                        "misc": ["tw"],
+                        "see_also": [{"kind": "abbr", "w": "电子计算机",
+                                      "t": "電子計算機",
+                                      "py": "dian4 zi3 ji4 suan4 ji1"}],
+                        "lsource": ['"calculator"'], "s_inf": ["fixture note"],
+                    }},
+                },
+            ],
+        })
         self.assertEqual(
-            common[0]["extensions"]["zh-ja-dict"],
-            {key: value for key, value in native[0].items() if key != "senses"})
-        self.assertEqual(
-            common[0]["senses"][0]["translations"][0]["verification"],
-            [{"subject": "translation", "method": "script_and_length",
-              "result": "passed", "source_value": "llm_ok"}])
-        self.assertEqual(common[1]["senses"][0]["translations"][0]["verification"], [])
-        supplement = common[3]["senses"][0]["translations"][0]
-        self.assertEqual(supplement["provenance"]["method"], "legacy")
-        self.assertEqual(supplement["verification"], [{
-            "subject": "legacy_entry_translation_set", "method": "legacy_llm_review",
-            "result": "passed", "source_value": "llm_ok"}])
-        self.assertTrue(supplement["uncertain"])
-        self.assertNotIn("verified", json.dumps(common, ensure_ascii=False))
+            common[1]["senses"][0]["extensions"],
+            {"zh-ja-dict": {"variant_of": [
+                {"kind": "old", "w": "汝", "py": "ru3"}]}})
+        encoded = json.dumps(common, ensure_ascii=False)
+        self.assertNotIn('"qa"', encoded)
+        self.assertNotIn('"moe"', encoded)
+        self.assertNotIn("verified", encoded)
 
-    def test_100件を再集約せず逆投影できる(self):
+    def test_fixtureは全native属性とqa組合せを独立期待値で網羅する(self):
+        native, common, *_ = self.export(20)
+        self.assertEqual(
+            set().union(*(entry.keys() for entry in native)),
+            set(common_format.NATIVE_ENTRY_KEYS))
+        self.assertEqual(
+            set().union(*(sense.keys() for entry in native for sense in entry["senses"])),
+            set(common_format.NATIVE_SENSE_KEYS))
+
+        cases = [
+            (0, 0, "llm_ok", "llm", "translation", "script_and_length", "passed"),
+            (0, 1, "llm_fixed", "llm", "translation", "script_and_length", "passed"),
+            (1, 0, "derived", "derived", None, None, None),
+            (2, 0, "hand_fixed", "manual_override",
+             "translation", "script_and_length", "passed"),
+            (3, 0, "llm_ok", "legacy", "legacy_entry_translation_set",
+             "legacy_llm_review", "passed"),
+            (4, 0, "llm_fixed", "legacy", "legacy_entry_translation_set",
+             "legacy_llm_review", "corrected"),
+            (5, 0, "machine_backed", "legacy", "legacy_entry_translation_set",
+             "legacy_dictionary_overlap", "reported_overlap"),
+            (6, 0, "unchecked", "legacy", "legacy_entry_translation_set",
+             "legacy_review", "unchecked"),
+            (7, 0, "human_reviewed", "legacy", "reading_sense_alignment",
+             "legacy_human_review", "passed"),
+        ]
+        for entry_index, sense_index, qa, method, subject, check_method, result in cases:
+            with self.subTest(qa=qa):
+                translation = common[entry_index]["senses"][sense_index]["translations"][0]
+                self.assertEqual(translation["provenance"], {
+                    "method": method, "source": "zh-ja-dict", "source_value": qa,
+                })
+                expected = [] if subject is None else [{
+                    "subject": subject, "method": check_method, "result": result,
+                }]
+                self.assertEqual(translation["verification"], expected)
+
+        self.assertEqual(common[1]["verification"], [{
+            "subject": "entry_headword_and_sense_count",
+            "method": "moedict_crosscheck", "result": "headword",
+        }])
+        self.assertEqual(common[2]["verification"], [{
+            "subject": "entry_headword_and_sense_count",
+            "method": "moedict_crosscheck", "result": "none",
+        }])
+        self.assertEqual(common[4]["verification"], [])
+        self.assertTrue(common[3]["senses"][0]["translations"][0]["uncertain"])
+
+    def test_100件を再集約せず全属性の保存先と候補順を検査する(self):
         native, common, stats, *_ = self.export(100)
         self.assertEqual(stats.entries, 100)
-        self.assertEqual([common_format.project_native_entry(row) for row in common], native)
+        for number, (native_entry, common_entry) in enumerate(
+                zip(native, common), start=1):
+            common_format.check_information_preserved(
+                native_entry, common_entry, number=number)
+        self.assertEqual(
+            common[0]["headwords"],
+            [{"text": "计算机", "kind": "primary"},
+             {"text": "計算機", "kind": "traditional"}])
+        self.assertEqual(
+            [reading["kind"] for reading in common[0]["readings"]],
+            ["primary", "taiwan", "alternate"])
+        self.assertEqual(
+            [sense["translations"][0]["text"] for sense in common[0]["senses"]],
+            ["コンピュータ", "電卓"])
 
     def test_wordとpinyinが同じでもtradを含むIDで区別する(self):
         _, common, *_ = self.export(20)
@@ -159,11 +280,104 @@ class CommonFixture(unittest.TestCase):
                     out / entries_file.NAME, common_manifest, entries, native_manifest)
         common_manifest.write_text(json.dumps(original), encoding="utf-8")
 
+    def test_SQLiteと共通生成元の不一致を拒否する(self):
+        _, common_rows, _, entries, native_manifest, out = self.export(20)
+        common_entries = out / entries_file.NAME
+        common_manifest = out / "manifest.json"
+        database = out / "dictionary.sqlite3"
+        sidecar = out / "dictionary-db-manifest.json"
+        database.write_bytes(b"SQLite fixture")
+        with self.assertRaisesRegex(common_format.CommonFormatError, "両方必要"):
+            common_format.validate_common(common_entries, common_manifest, entries, native_manifest)
+        sidecar.write_text(json.dumps({
+            "source_entries_sha256": common_format.sha256_file(common_entries),
+            "source_manifest_sha256": common_format.sha256_file(common_manifest),
+            "file_sha256": common_format.sha256_file(database),
+            "file_bytes": database.stat().st_size,
+            "dictionary": common_format.DICTIONARY,
+            "entry_count": 20,
+            "sense_count": sum(len(row["senses"]) for row in common_rows),
+            "payload_encoding": "deflate-raw",
+        }), encoding="utf-8")
+        with self.assertRaisesRegex(common_format.CommonFormatError, "SQLiteの内容"):
+            common_format.validate_common(common_entries, common_manifest, entries, native_manifest)
+        database.write_bytes(b"stale database")
+        with self.assertRaisesRegex(common_format.CommonFormatError, "一致しない"):
+            common_format.validate_common(common_entries, common_manifest, entries, native_manifest)
+
+    def test_SQLiteの中間entryがJSONLと違えばhash更新後も拒否する(self):
+        _, rows, _, entries, native_manifest, out = self.export(20)
+        common_entries = out / entries_file.NAME
+        common_manifest = out / "manifest.json"
+        database = out / "dictionary.sqlite3"
+        sidecar = out / "dictionary-db-manifest.json"
+
+        def encode(row):
+            compressor = zlib.compressobj(wbits=-15)
+            data = json.dumps(row, ensure_ascii=False).encode()
+            return compressor.compress(data) + compressor.flush()
+
+        with sqlite3.connect(database) as connection:
+            connection.executescript("""
+                PRAGMA user_version=2;
+                CREATE TABLE dictionary_meta (
+                    singleton INTEGER, dictionary TEXT, entry_count INTEGER,
+                    sense_count INTEGER, source_manifest_sha256 TEXT,
+                    source_entries_sha256 TEXT, payload_encoding TEXT);
+                CREATE TABLE entries (
+                    ordinal INTEGER, id_source TEXT, id_value TEXT,
+                    sense_count INTEGER, payload BLOB);
+                CREATE TABLE lookup_keys (key TEXT, ordinal INTEGER);
+                CREATE TABLE shared_values (id INTEGER, kind TEXT, json BLOB);
+            """)
+            connection.execute("INSERT INTO dictionary_meta VALUES (1,?,?,?,?,?,?)", (
+                common_format.DICTIONARY, len(rows), sum(len(row["senses"]) for row in rows),
+                common_format.sha256_file(common_manifest),
+                common_format.sha256_file(common_entries), "deflate-raw",
+            ))
+            for ordinal, row in enumerate(rows):
+                connection.execute("INSERT INTO entries VALUES (?,?,?,?,?)", (
+                    ordinal, row["id"]["source"], row["id"]["value"],
+                    len(row["senses"]), encode(row),
+                ))
+
+        def write_sidecar():
+            sidecar.write_text(json.dumps({
+                "dictionary": common_format.DICTIONARY,
+                "entry_count": len(rows),
+                "sense_count": sum(len(row["senses"]) for row in rows),
+                "payload_encoding": "deflate-raw",
+                "source_entries_sha256": common_format.sha256_file(common_entries),
+                "source_manifest_sha256": common_format.sha256_file(common_manifest),
+                "file_sha256": common_format.sha256_file(database),
+                "file_bytes": database.stat().st_size,
+            }), encoding="utf-8")
+
+        write_sidecar()
+        common_format.validate_common(common_entries, common_manifest, entries, native_manifest)
+        changed = copy.deepcopy(rows[10])
+        changed["senses"][0]["translations"][0]["text"] = "別の訳"
+        with sqlite3.connect(database) as connection:
+            connection.execute("UPDATE entries SET payload=? WHERE ordinal=10", (encode(changed),))
+        write_sidecar()
+        with self.assertRaisesRegex(common_format.CommonFormatError, "ordinal=10"):
+            common_format.validate_common(common_entries, common_manifest, entries, native_manifest)
+
     def test_qaとsrcの未定義な組合せを拒否する(self):
         row = {"word": "未定義", "pinyin": "wèi dìng yì",
                "senses": [{"ja": "未定義", "qa": "machine_backed"}]}
         with self.assertRaises(common_format.CommonFormatError):
             common_format.to_common_entry(row)
+
+    def test_保存先のないentryとsense属性を拒否する(self):
+        entry = copy.deepcopy(sample_rows(20)[0])
+        entry["unknown_entry"] = 1
+        with self.assertRaises(common_format.CommonFormatError):
+            common_format.to_common_entry(entry)
+        sense = copy.deepcopy(sample_rows(20)[0])
+        sense["senses"][0]["unknown_sense"] = 1
+        with self.assertRaises(common_format.CommonFormatError):
+            common_format.to_common_entry(sense)
 
     def test_native件数不一致なら既存commonを置き換えない(self):
         _, entries, manifest = self.native_fixture(20)

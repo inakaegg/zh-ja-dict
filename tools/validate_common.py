@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""中日共通辞書形式v1とnativeへの逆投影を検査する。"""
+"""中日共通辞書形式v2とnativeからの情報保存対応を検査する。"""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="中日共通辞書形式v1を全件検査する")
+    parser = argparse.ArgumentParser(description="中日共通辞書形式v2を全件検査する")
     parser.add_argument(
         "--entries", type=pathlib.Path,
         default=REPO_ROOT / "data" / "common" / entries_file.NAME)
