@@ -30,6 +30,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dataset_sources  # noqa: E402
 import entries_file  # noqa: E402
 import validate_data  # noqa: E402
+import common_format  # noqa: E402
 
 # 配るデータのキーの順序。骨組みだけで使う `id`・`seed_gloss` はここに無い＝落とす。
 ENTRY_KEYS = ("word", "trad", "pinyin", "tw_pr", "also_pr", "cl",
@@ -265,9 +266,14 @@ def build(args) -> int:
             manifest["files"]["ja-zh/glosses.jsonl"] = {
                 "lines": sum(1 for line in source if line.strip())}
     manifest["sources"] = dataset_sources.SOURCES
-    (args.out / "manifest.json").write_text(
+    manifest_path = args.out / "manifest.json"
+    manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    say(f"{args.out / 'manifest.json'} を書いた")
+    say(f"{manifest_path} を書いた")
+
+    common = common_format.export_common(target, manifest_path, args.out / "common")
+    say(f"{args.out / 'common'} へ共通形式を書いた: "
+        f"{common.entries:,} entry / {common.senses:,} 語義")
 
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
