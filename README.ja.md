@@ -449,7 +449,7 @@ $ python3 tools/validate_data.py --cedict-entries 124985
 違反が1件でもあれば終了コード1で終わります。GitHub Actions（`.github/workflows/validate.yml`）が push と pull request で同じコマンドを実行します。件数だけを見たいときは `--counts` を付けます。このときは違反があっても終了コード0で終わります。
 
 監査用の共通形式は次のCLIでnativeから再生成し、各native属性がv2で定めた唯一の保存先にあり、意味のある候補順・語義順・訳順が変わっていないことを検査できます。その後、共通の `GlossDataAudit` CLIでアプリ用SQLiteを生成します。これらの処理にnetworkは使いません。
-SQLite生成の前に、builder commit `6f1f116`を含む`zh-base` checkoutを同じ親directoryの`../zh-base`へ置き、`(cd ../zh-base && tools/build-xcframework.sh)`を実行してください。このcommitは現在localにあり、公開branchを新しくcloneしただけではbuilderを使えません。
+SQLite生成の前に、builder commit `6f1f116`を含む`zh-base` checkoutを同じ親directoryの`../zh-base`へ置き、`(cd ../zh-base && tools/build-xcframework.sh)`を実行してください。
 
 ```console
 $ python3 tools/export_common.py

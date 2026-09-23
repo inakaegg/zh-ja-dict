@@ -449,7 +449,7 @@ $ python3 tools/validate_data.py --cedict-entries 124985
 A single violation exits with status 1. GitHub Actions (`.github/workflows/validate.yml`) runs the same command on push and pull request. Pass `--counts` to see only the tallies; that always exits 0.
 
 The audit form can be regenerated from native data and checked to ensure that every native attribute has its single v2 destination and that meaningful candidate, sense and translation order is unchanged. The shared `GlossDataAudit` CLI then builds the application SQLite file. None of these operations uses the network.
-Before building SQLite, place a `zh-base` checkout containing builder commit `6f1f116` in the sibling `../zh-base` directory, then run `(cd ../zh-base && tools/build-xcframework.sh)`. This commit is currently local; a fresh clone of the published branch does not yet contain the builder.
+Before building SQLite, place a `zh-base` checkout containing builder commit `6f1f116` in the sibling `../zh-base` directory, then run `(cd ../zh-base && tools/build-xcframework.sh)`.
 
 ```console
 $ python3 tools/export_common.py
