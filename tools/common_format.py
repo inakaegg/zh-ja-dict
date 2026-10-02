@@ -104,7 +104,13 @@ def _require_native_entry(entry: dict) -> None:
     senses = entry.get("senses")
     if not isinstance(senses, list) or not senses:
         raise CommonFormatError(f"{entry['word']}: native sensesが空でない配列でない")
-    unknown = [key for key in entry if key not in NATIVE_ENTRY_KEYS]
+    if "primary" in entry and (type(entry["primary"]) is not int
+                               or not 1 <= entry["primary"] <= len(senses)
+                               or len(senses) < 2):
+        raise CommonFormatError(f"{entry['word']}: primaryが複数語義の有効な番号でない")
+    if "default" in entry and entry["default"] is not True:
+        raise CommonFormatError(f"{entry['word']}: defaultはtrueのときだけ書く")
+    unknown = [key for key in entry if key not in NATIVE_ENTRY_KEYS + ("primary", "default")]
     if unknown:
         raise CommonFormatError(f"{entry['word']}: native entryに未知のキーがある: {unknown}")
 
@@ -256,6 +262,14 @@ def _common_sense(entry: dict, sense: dict) -> OrderedDict:
     ])
 
 
+def _entry_extensions(entry: dict) -> OrderedDict:
+    extensions = _namespaced_extension(entry, ENTRY_EXTENSION_KEYS)
+    for native, common in (("primary", "primary_sense"), ("default", "default_row")):
+        if native in entry:
+            extensions.setdefault(EXTENSION_KEY, OrderedDict())[common] = entry[native]
+    return extensions
+
+
 def to_common_entry(entry: dict) -> OrderedDict:
     """native entryを、意味を増やさず共通形式へ写す。"""
     _require_native_entry(entry)
@@ -269,7 +283,7 @@ def to_common_entry(entry: dict) -> OrderedDict:
         ("readings", _readings(entry)),
         ("levels", _levels(entry)),
         ("verification", _entry_verification(entry)),
-        ("extensions", _namespaced_extension(entry, ENTRY_EXTENSION_KEYS)),
+        ("extensions", _entry_extensions(entry)),
         ("senses", senses),
     ])
 
@@ -277,6 +291,17 @@ def to_common_entry(entry: dict) -> OrderedDict:
 def check_information_preserved(native: dict, common: dict,
                                 number: Optional[int] = None) -> None:
     """nativeの各属性がv2で定めた唯一の保存先と一致することを確認する。"""
+    extension = common.get("extensions", {}).get(EXTENSION_KEY, {})
+    if not isinstance(extension, dict):
+        raise CommonFormatError("項目の拡張属性がobjectでない")
+    if set(extension) - set(ENTRY_EXTENSION_KEYS) - {"primary_sense", "default_row"}:
+        raise CommonFormatError("項目の拡張属性に未知のキーがある")
+    if "primary_sense" in extension and (type(extension["primary_sense"]) is not int
+            or not 1 <= extension["primary_sense"] <= len(common["senses"])
+            or len(common["senses"]) < 2):
+        raise CommonFormatError("primary_senseが複数語義の有効な番号でない")
+    if "default_row" in extension and extension["default_row"] is not True:
+        raise CommonFormatError("default_rowはtrueのときだけ書く")
     expected = to_common_entry(native)
     if common != expected:
         where = f" {number}" if number is not None else ""

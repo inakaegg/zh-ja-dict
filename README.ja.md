@@ -17,7 +17,7 @@
 
 区分ごとの検品の度合いは [qa の意味](#qa-の意味) を見てください。
 
-- 中日 `data/zh-ja/entries.jsonl.deflate` 157,798 entry・229,130 語義（圧縮後 7,424,431 バイト、展開すると 34,405,030 バイト）。日中 `data/ja-zh/glosses.jsonl` 40,000行
+- 中日 `data/zh-ja/entries.jsonl.deflate` 157,798 entry・229,130 語義（圧縮後 7,434,065 バイト、展開すると 32,197,658 バイト）。日中 `data/ja-zh/glosses.jsonl` 40,000行
 - `data/common/entries.jsonl.deflate` は、同じ中日157,798 entry・229,130語義を共通形式v2へ写した監査・SQLite生成用データです
 - アプリ向けの `data/common/dictionary.sqlite3` は同じ内容を検索用SQLiteにした71,471,104バイトの成果物です。監査用JSONLはアプリへ同梱しません
 - 中日の1行は **1 entry**です。(簡体字, 繁体字, 読み) の3つ組で一意になります
@@ -78,7 +78,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 
 `NSData.DecompressionAlgorithm.zlib` と C の `COMPRESSION_ZLIB` は、名前に反して**ヘッダ無しの DEFLATE** を指します。ここで zlib ヘッダを付けると、書く側は何も気付かないまま読む側だけが壊れます。読み書きの正本は `tools/entries_file.py` です。
 
-同梱しているのは 7,424,431 バイトで、展開すると 34,405,030 バイトになります（**21.6%**）。
+同梱しているのは 7,434,065 バイトで、展開すると 32,197,658 バイトになります（**23.1%**）。
 
 `zlib` は圧縮の流れが途中で切れていても例外を出しません。途中まで展開して黙って終わるので、**流れの終わりの印を確かめてください**。`tools/entries_file.py` はこれを確かめます。
 
@@ -98,6 +98,8 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `src` | string | 任意 | 補遺 entry にだけ付き、値は `"zh-ja-dict"` です |
 | `seed` | string | 任意 | 旧版の訳を作成の候補として渡した entry に付き、値はその訳の検品の区分です |
 | `moe` | string | 任意 | 萌典との照合結果。[moe の意味](#moe-の意味)を参照 |
+| `primary` | 整数 | 語義2件以上で必須 | 現代中国語で最もよく使われる語義。`senses` の1からの番号 |
+| `default` | boolean | 任意 | 字だけで引いたときの既定の行。`true` のときだけ置き、同じ `word` で複数行ある場合は1行に必須 |
 | `senses` | 配列 | 必須 | 語義。1件以上あります |
 
 ```json
@@ -117,6 +119,10 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `cl` | 1,552 |
 | `tw_pr` | 510 |
 | `also_pr` | 175 |
+| `primary` | 43,361 |
+| `default` | 4,025 |
+
+主な語義と既定の行の正本は `data/inputs/primary-senses.jsonl` と `data/inputs/default-rows.jsonl` です。行は `word`・`trad`（省略時は空文字）・`pinyin` で対応させ、語義の番号と `ja` の一致を確かめます。記録の不足・存在しない行・訳の不一致・既定の重複があれば適用を止めます。再実行では既存の `primary`・`default` を消してから適用します。共通形式では項目の `extensions["zh-ja-dict"]` の `primary_sense`（整数）・`default_row`（`true` のみ）へ写します。
 
 ### entry の鍵は3つ組です
 
@@ -348,8 +354,8 @@ CC-CEDICT の丸括弧の注記のうち、**語感・地域・修辞を表す�
       "entries_supplement": 32813,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 7424431,
-      "uncompressed_bytes": 34405030
+      "bytes": 7434065,
+      "uncompressed_bytes": 32197658
     },
     "ja-zh/glosses.jsonl": {"lines": 40000}
   },
@@ -524,6 +530,10 @@ python3 tools/build_dataset.py \
     --base tmp/entries-base.jsonl --glosses tmp/ja-full.jsonl \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
+
+# 主な語義と既定の行を確定済みの記録から適用し、共通形式を更新する
+python3 tools/apply_primary.py
+python3 tools/export_common.py
 
 # 4. 全件検査。旧版と HSK の元データを渡すと、取りこぼしまで見る
 python3 tools/validate_data.py --cedict-entries 124985 \

@@ -8,8 +8,8 @@
       "entries_supplement": 32813,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 7424431,
-      "uncompressed_bytes": 34405030
+      "bytes": 7434065,
+      "uncompressed_bytes": 32197658
     },
     "ja-zh/glosses.jsonl": {
       "lines": 40000
