@@ -14,9 +14,9 @@
       "lines": 157798,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 10409935,
-      "uncompressed_bytes": 137509415,
-      "sha256": "d0d14f8b2a25b7177b62422bae1deedc3a7d39b23c4935c912462b8cb3abfdcb"
+      "bytes": 10531409,
+      "uncompressed_bytes": 138554889,
+      "sha256": "05535fd2529232bf4b3df8a5f19289b1c7d8d2b5e2d01e724ed67f071234152f"
     }
   },
   "sources": {
@@ -50,6 +50,6 @@
   },
   "source_artifact": {
     "schema_version": 3,
-    "sha256": "d3ec3d1f5a3b2416f1bad2e553e8003bda0286c02ba9f41d1af2b8d95636a06c"
+    "sha256": "9b4b4943a4dc84052c3bf29730773d1e8393dd15c03e0ba75d03665b5b57eab8"
   }
 }

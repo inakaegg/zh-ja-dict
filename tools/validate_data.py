@@ -54,7 +54,7 @@ XREF_KINDS = frozenset({"see", "see_also", "abbr", "used_in"})
 
 ENTRY_REQUIRED = {"word", "pinyin", "senses"}
 ENTRY_OPTIONAL = {"trad", "tw_pr", "also_pr", "cl", "hsk2", "hsk3", "pos",
-                  "src", "seed", "moe"}
+                  "src", "seed", "moe", "primary", "default"}
 SENSE_REQUIRED = {"ja", "qa"}
 SENSE_OPTIONAL = {"en", "unsure", "misc", "variant_of", "see_also", "lsource", "s_inf"}
 
@@ -623,6 +623,18 @@ def validate_zh_ja_entries(path, rows, violations) -> Counter:
             violations.append(Violation(name, number, word, "bad-type",
                                         f"senses が空でない配列でない: {senses!r}"))
             continue
+        if len(senses) >= 2 and "primary" not in obj:
+            # 適用を忘れたデータを正常として通さない。第1語義は字の本来の意味のことが多い。
+            violations.append(Violation(name, number, word, "missing-primary",
+                                        "複数語義の行に primary が無い"))
+        if "primary" in obj and (type(obj["primary"]) is not int
+                                 or not 1 <= obj["primary"] <= len(senses)
+                                 or len(senses) < 2):
+            violations.append(Violation(name, number, word, "bad-primary",
+                                        "primary が複数語義の有効な番号でない"))
+        if "default" in obj and obj["default"] is not True:
+            violations.append(Violation(name, number, word, "bad-default",
+                                        "default は true のときだけ書く"))
         for index, sense in enumerate(senses):
             check_sense(name, number, word, index, sense, violations, counts)
 
@@ -632,6 +644,22 @@ def validate_zh_ja_entries(path, rows, violations) -> Counter:
                       "seed", "moe"):
             if field in obj:
                 counts[f"_属性:{field}"] += 1
+    defaults = Counter(obj.get("word") for _, obj in rows if obj.get("default") is True
+                       and isinstance(obj.get("word"), str))
+    # 行が2つ以上の字には既定の行がちょうど1つ要る。無いと字だけで引いたときの行が決まらない。
+    row_counts = Counter(obj.get("word") for _, obj in rows if isinstance(obj.get("word"), str))
+    first_line = {}
+    for number, obj in rows:
+        if isinstance(obj.get("word"), str):
+            first_line.setdefault(obj["word"], number)
+    for word, count in row_counts.items():
+        if count >= 2 and defaults[word] == 0:
+            violations.append(Violation(name, first_line[word], word, "missing-default",
+                                        "行が2つ以上の字に default が無い"))
+    for word, count in defaults.items():
+        if count > 1:
+            violations.append(Violation(name, 0, word, "duplicate-default",
+                                        f"同じ字の default が {count}件"))
     check_duplicate_entries(name, rows, violations)
     return counts
 

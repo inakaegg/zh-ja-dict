@@ -19,7 +19,7 @@ How a Japanese gloss was produced varies by sense. The total is 229,130.
 
 See [What qa means](#what-qa-means) for how each group was checked.
 
-- zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,424,431 bytes compressed, 34,405,030 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
+- zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,434,065 bytes compressed, 32,197,658 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
 - `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses as common format v2 for auditing and SQLite generation
 - `data/common/dictionary.sqlite3` is the corresponding 71,471,104-byte searchable SQLite artifact for applications. The audit JSONL is not bundled into applications
 - One zh→ja line is **one entry**, unique by the triple (simplified, traditional, reading)
@@ -80,7 +80,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 
 `NSData.DecompressionAlgorithm.zlib` and C's `COMPRESSION_ZLIB` mean **headerless DEFLATE**, despite the name. Adding a zlib header here breaks the reader while the writer notices nothing. `tools/entries_file.py` is the source of truth for both sides.
 
-The shipped file is 7,424,431 bytes and expands to 34,405,030 (**21.6%**).
+The shipped file is 7,434,065 bytes and expands to 32,197,658 (**23.1%**).
 
 `zlib` raises no exception when the stream is cut short: it decompresses what it has and stops silently, so **check that the stream reached its end marker**. `tools/entries_file.py` does that.
 
@@ -100,6 +100,8 @@ The shipped file is 7,424,431 bytes and expands to 34,405,030 (**21.6%**).
 | `src` | string | optional | Present only on supplement entries, with the value `"zh-ja-dict"` |
 | `seed` | string | optional | Present when the previous version's gloss was offered as a candidate; the value is that gloss's check category |
 | `moe` | string | optional | Result of cross-checking against MoeDict. See [What moe means](#what-moe-means) |
+| `primary` | integer | required for multiple senses | The most common sense in modern Chinese, numbered from 1 in `senses` |
+| `default` | boolean | optional | The default entry for a headword lookup. Written only as `true`; exactly one is required when a `word` has multiple entries |
 | `senses` | array | yes | Senses; at least one |
 
 ```json
@@ -119,6 +121,10 @@ Entries carrying each optional key:
 | `cl` | 1,552 |
 | `tw_pr` | 510 |
 | `also_pr` | 175 |
+| `primary` | 43,361 |
+| `default` | 4,025 |
+
+The source records are `data/inputs/primary-senses.jsonl` and `data/inputs/default-rows.jsonl`. Entries match by `word`, `trad` (empty when absent), and `pinyin`; each sense number is checked against its `ja` translation. Missing records, nonexistent entries, mismatched translations, or duplicate defaults abort application. Each run removes existing `primary` and `default` before applying the records again. The common format stores them in entry `extensions["zh-ja-dict"]` as `primary_sense` (integer) and `default_row` (`true` only).
 
 ### The entry key is a triple
 
@@ -348,8 +354,8 @@ An excerpt of the real file, with the body of `sources` elided.
       "entries_supplement": 32813,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 7424431,
-      "uncompressed_bytes": 34405030
+      "bytes": 7434065,
+      "uncompressed_bytes": 32197658
     },
     "ja-zh/glosses.jsonl": {"lines": 40000}
   },
@@ -524,6 +530,10 @@ python3 tools/build_dataset.py \
     --base tmp/entries-base.jsonl --glosses tmp/ja-full.jsonl \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
+
+# Apply the confirmed primary senses and default entries, then update the common data
+python3 tools/apply_primary.py
+python3 tools/export_common.py
 
 # 4. Validate everything. Pass the previous version and the HSK seed to catch losses
 python3 tools/validate_data.py --cedict-entries 124985 \

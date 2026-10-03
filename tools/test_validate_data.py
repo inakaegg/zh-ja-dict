@@ -29,7 +29,7 @@ JA_ZH = "ja-zh/glosses.jsonl"
 ENTRIES = [
     {"word": "上级", "trad": "上級", "pinyin": "shàng jí", "hsk2": 5, "hsk3": 6,
      "pos": ["n"], "cl": [{"w": "个", "t": "個", "py": "ge4"}],
-     "seed": "machine_backed", "moe": "full",
+     "seed": "machine_backed", "moe": "full", "primary": 1,
      "senses": [
          {"en": ["higher authorities"], "ja": "上層部", "qa": "llm_ok"},
          {"en": ["superiors"], "ja": "上司", "qa": "llm_fixed", "misc": ["coll"]},
@@ -215,13 +215,14 @@ class Duplicates(unittest.TestCase):
         rows = copy.deepcopy(ENTRIES)
         clone = copy.deepcopy(rows[0])
         clone["trad"] = "尚級"      # 繁体だけ違う
+        rows[0]["default"] = True   # 同じ字に行が2つあれば既定の行が要る
         rows.append(clone)
         self.assertEqual(run(rows)[0], [])
 
     def test_大小文字が違えば別のentry(self):
         # CC-CEDICT は固有名詞の読みを大文字で始める（`三 Sān` 姓 と `三 sān` 数詞）。
         rows = copy.deepcopy(ENTRIES)
-        rows.append({"word": "三", "pinyin": "sān",
+        rows.append({"word": "三", "pinyin": "sān", "default": True,
                      "senses": [{"ja": "3", "qa": "llm_ok"}]})
         rows.append({"word": "三", "pinyin": "Sān",
                      "senses": [{"ja": "サン（姓）", "qa": "llm_ok"}]})

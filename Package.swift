@@ -29,7 +29,7 @@ let package = Package(
         .target(
             name: "ZhJaDictData",
             path: "data",
-            exclude: ["ja-zh", "common"],
+            exclude: ["ja-zh", "common", "inputs"],
             sources: ["ZhJaDictData.swift"],
             resources: [
                 .copy("zh-ja"),
