@@ -44,14 +44,14 @@ class ApplyPosTests(unittest.TestCase):
         return result, stderr.getvalue()
 
     def test_adds_only_missing_codes_to_the_recorded_row_and_is_idempotent(self):
-        self.assertEqual(self.run_apply()[0], (3, 1, 0))
+        self.assertEqual(self.run_apply()[0], (3, 1, 0, 0))
         rows = self.read_rows()
         self.assertEqual(rows[0]['pos'], ['y', 'o', 'e'])
         self.assertEqual(list(rows[0]), list(self.rows[0]))
         self.assertEqual(rows[1:], self.rows[1:])
         before = (self.entries.read_bytes(), self.manifest.read_bytes())
         # 2回目は足す品詞が既にあるので、変えずに「既にあった」と数える。
-        self.assertEqual(self.run_apply()[0], (3, 0, 1))
+        self.assertEqual(self.run_apply()[0], (3, 0, 1, 0))
         self.assertEqual(before, (self.entries.read_bytes(), self.manifest.read_bytes()))
         info = json.loads(self.manifest.read_text())['files'][apply_pos.FILE_KEY]
         self.assertEqual(info['other'], 7)
@@ -73,11 +73,18 @@ class ApplyPosTests(unittest.TestCase):
         self.assertEqual(row['pos'], ['a'])
 
     def test_missing_row_only_warns(self):
-        self.write_records([{**self.record, 'pinyin': 'wà'}])
+        self.write_records([{**self.record, 'pinyin': 'wà'}, self.record])
         result, stderr = self.run_apply()
-        self.assertEqual(result, (3, 0, 0))
+        # 行の無い記録は警告だけにし、残りの記録は適用する。
+        self.assertEqual(result, (3, 1, 0, 1))
         self.assertIn('行がデータに無い', stderr)
-        self.assertEqual(self.read_rows(), self.rows)
+        self.assertEqual(self.read_rows()[0]['pos'], ['y', 'o', 'e'])
+        self.assertEqual(self.read_rows()[1:], self.rows[1:])
+
+    def test_adds_only_the_codes_not_yet_present(self):
+        self.write_records([{**self.record, 'add': ['o', 'e']}])
+        self.assertEqual(self.run_apply()[0], (3, 1, 0, 0))
+        self.assertEqual(self.read_rows()[0]['pos'], ['y', 'o', 'e'])
 
     def test_stops_without_writing_when_records_are_invalid(self):
         cases = [
@@ -105,6 +112,23 @@ class ApplyPosTests(unittest.TestCase):
         self.write_rows(self.rows + [self.rows[0]])
         with self.assertRaisesRegex(apply_pos.PosError, 'データの行の重複'):
             self.run_apply()
+
+    def test_order_with_apply_primary_does_not_change_the_bytes(self):
+        import apply_primary
+        self.write_records([{'word': '好', 'trad': '', 'pinyin': 'hǎo', 'add': ['a'], 'reason': '試験'}])
+        primary = self.root / 'primary.jsonl'
+        defaults = self.root / 'defaults.jsonl'
+        primary.write_text('')
+        defaults.write_text(json.dumps({'word': '哇', 'trad': '', 'pinyin': 'wā'}, ensure_ascii=False) + '\n')
+        results = []
+        for order in ('pos-first', 'primary-first'):
+            self.write_rows(self.rows)
+            steps = [lambda: self.run_apply(),
+                     lambda: apply_primary.apply_primary(self.entries, primary, defaults, self.manifest)]
+            for step in (steps if order == 'pos-first' else steps[::-1]):
+                step()
+            results.append(self.entries.read_bytes())
+        self.assertEqual(results[0], results[1])
 
     def test_main_reports_errors_with_exit_code(self):
         self.write_records([{**self.record, 'add': []}])

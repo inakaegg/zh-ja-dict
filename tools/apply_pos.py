@@ -47,7 +47,7 @@ def load_records(path):
         except ValueError as error:
             raise PosError(f"{path}:{number}: {error}") from None
         if key in records:
-            raise PosError(f"記録の重複: {key!r}")
+            raise PosError(f"{path}:{number}: 記録の重複: {key!r}")
         codes = row.get("add")
         if (not isinstance(codes, list) or not codes or len(set(codes)) != len(codes)
                 or any(not isinstance(code, str) or code not in POS_VALUES for code in codes)):
@@ -72,7 +72,7 @@ def with_pos(row, pos):
 
 
 def apply_pos(entries, records_path, manifest_path):
-    """(行数, 足した記録の数, 既に品詞があった記録の数) を返す。"""
+    """(行数, 足した記録の数, 既に品詞があった記録の数, 行が無い記録の数) を返す。"""
     records = load_records(records_path)
     rows = [json.loads(line) for line in entries_file.read_lines(entries)]
     seen = set()
@@ -117,7 +117,7 @@ def apply_pos(entries, records_path, manifest_path):
         for path in (temporary, manifest_temporary):
             if path.exists():
                 path.unlink()
-    return len(rows), added, present
+    return len(rows), added, present, len(absent)
 
 
 def main(argv=None):
@@ -130,11 +130,12 @@ def main(argv=None):
         parser.add_argument("--" + option, type=pathlib.Path, default=REPO_ROOT / default)
     args = parser.parse_args(argv)
     try:
-        rows, added, present = apply_pos(args.entries, args.pos_additions, args.manifest)
+        rows, added, present, absent = apply_pos(args.entries, args.pos_additions, args.manifest)
     except (OSError, ValueError, KeyError, zlib.error) as error:
         print(f"apply_pos: {error}", file=sys.stderr)
         return 1
-    print(f"適用: {rows:,}行 / 品詞を足した {added:,}件 / 既にあった {present:,}件 / 違反0件")
+    # 行が無い記録は止めないが、要約にも出して見落とさないようにする。
+    print(f"適用: {rows:,}行 / 品詞を足した {added:,}件 / 既にあった {present:,}件 / 行が無い {absent:,}件")
     return 0
 
 

@@ -21,7 +21,7 @@ See [What qa means](#what-qa-means) for how each group was checked.
 
 - zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,434,067 bytes compressed, 32,197,662 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
 - `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses as common format v2 for auditing and SQLite generation
-- `data/common/dictionary.sqlite3` is the corresponding 71,471,104-byte searchable SQLite artifact for applications. The audit JSONL is not bundled into applications
+- `data/common/dictionary.sqlite3` is the corresponding 72,003,584-byte searchable SQLite artifact for applications. The audit JSONL is not bundled into applications
 - One zh→ja line is **one entry**, unique by the triple (simplified, traditional, reading)
 - **The zh→ja file ships compressed** as raw DEFLATE (RFC 1951). See [How it is compressed](#how-it-is-compressed)
 - Senses have been checked to different degrees. The `qa` field tells them apart
@@ -95,7 +95,7 @@ The shipped file is 7,434,067 bytes and expands to 32,197,662 (**23.1%**).
 | `also_pr` | string | optional | Alternative reading |
 | `hsk2` | integer | optional | HSK 2.0 level (1–6). See [HSK levels](#hsk-levels) |
 | `hsk3` | integer | optional | HSK 3.0 level (1–7) |
-| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …). For entries whose upstream part of speech is corrected, see [Part-of-speech additions](#part-of-speech-additions) |
+| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …). For entries given a part of speech the source lacks, see [Part-of-speech additions](#part-of-speech-additions) |
 | `cl` | array | optional | Measure words. Elements are `{"w": simplified, "t": traditional, "py": reading}` |
 | `src` | string | optional | Present only on supplement entries, with the value `"zh-ja-dict"` |
 | `seed` | string | optional | Present when the previous version's gloss was offered as a candidate; the value is that gloss's check category |
@@ -138,10 +138,10 @@ Such entries receive extra parts of speech from records in `data/inputs/pos-addi
 
 A record only adds parts of speech and never removes the ones from the source, so application does not stop when the source changes.
 
-- If an entry already has every part of speech to add, it is left alone and counted as "already present". If that count appears right after rebuilding the data, the source has gained the same tag and the record can be removed.
-- If a record has no matching entry, a warning is printed and the other records are still applied.
+- If an entry already has every part of speech to add, it is left alone and counted as "already present". If that count appears right after rebuilding the data, the source has gained the same tag and that line can be removed from the records. Keep the file, empty, even when no record is left.
+- If a record has no matching entry, a warning is printed and the other records are still applied. The final summary also reports how many records had no entry.
 - When an entry has no `pos`, it is placed after `hsk3` and before `src`, so running this before or after `apply_primary.py` gives the same bytes.
-- Application stops only on malformed records or duplicate entries in the data.
+- When checking records against the data, application stops on malformed records or duplicate entries in the data. It also stops when a file is missing or unreadable.
 
 There is currently one record.
 
