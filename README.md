@@ -19,7 +19,7 @@ How a Japanese gloss was produced varies by sense. The total is 229,130.
 
 See [What qa means](#what-qa-means) for how each group was checked.
 
-- zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,434,065 bytes compressed, 32,197,658 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
+- zh→ja `data/zh-ja/entries.jsonl.deflate`: 157,798 entries, 229,130 senses (7,434,067 bytes compressed, 32,197,662 expanded). ja→zh `data/ja-zh/glosses.jsonl`: 40,000 lines
 - `data/common/entries.jsonl.deflate` carries the same 157,798 zh→ja entries and 229,130 senses as common format v2 for auditing and SQLite generation
 - `data/common/dictionary.sqlite3` is the corresponding 71,471,104-byte searchable SQLite artifact for applications. The audit JSONL is not bundled into applications
 - One zh→ja line is **one entry**, unique by the triple (simplified, traditional, reading)
@@ -80,7 +80,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 
 `NSData.DecompressionAlgorithm.zlib` and C's `COMPRESSION_ZLIB` mean **headerless DEFLATE**, despite the name. Adding a zlib header here breaks the reader while the writer notices nothing. `tools/entries_file.py` is the source of truth for both sides.
 
-The shipped file is 7,434,065 bytes and expands to 32,197,658 (**23.1%**).
+The shipped file is 7,434,067 bytes and expands to 32,197,662 (**23.1%**).
 
 `zlib` raises no exception when the stream is cut short: it decompresses what it has and stops silently, so **check that the stream reached its end marker**. `tools/entries_file.py` does that.
 
@@ -95,7 +95,7 @@ The shipped file is 7,434,065 bytes and expands to 32,197,658 (**23.1%**).
 | `also_pr` | string | optional | Alternative reading |
 | `hsk2` | integer | optional | HSK 2.0 level (1–6). See [HSK levels](#hsk-levels) |
 | `hsk3` | integer | optional | HSK 3.0 level (1–7) |
-| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …). For entries whose upstream part of speech is corrected, see [Part-of-speech overrides](#part-of-speech-overrides) |
+| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …). For entries whose upstream part of speech is corrected, see [Part-of-speech additions](#part-of-speech-additions) |
 | `cl` | array | optional | Measure words. Elements are `{"w": simplified, "t": traditional, "py": reading}` |
 | `src` | string | optional | Present only on supplement entries, with the value `"zh-ja-dict"` |
 | `seed` | string | optional | Present when the previous version's gloss was offered as a candidate; the value is that gloss's check category |
@@ -126,17 +126,24 @@ Entries carrying each optional key:
 
 The source records are `data/inputs/primary-senses.jsonl` and `data/inputs/default-rows.jsonl`. Entries match by `word`, `trad` (empty when absent), and `pinyin`; each sense number is checked against its `ja` translation. Missing records, nonexistent entries, mismatched translations, or duplicate defaults abort application. Each run removes existing `primary` and `default` before applying the records again. The common format stores them in entry `extensions["zh-ja-dict"]` as `primary_sense` (integer) and `default_row` (`true` only).
 
-### Part-of-speech overrides
+### Part-of-speech additions
 
 Parts of speech come from the HSK source (complete-hsk-vocabulary). Some entries in that source lack the interjection tag (`e`). For example, 哇 wā has the interjection 「わあ」 (CC-CEDICT: Wow!) as its primary sense, yet its parts of speech are only modal particle and onomatopoeia (`y`, `o`).
 
-The parts of speech of such entries are corrected in `data/inputs/pos-overrides.jsonl` and applied with `tools/apply_pos.py`. Each line is one record. It identifies the entry by `word`, `trad`, and `pinyin`, and holds the original parts of speech (`from`), the new ones (`pos`), and the reason (`reason`).
+Such entries receive extra parts of speech from records in `data/inputs/pos-additions.jsonl`, applied with `tools/apply_pos.py`. Each line is one record. It identifies the entry by `word`, `trad`, and `pinyin`, and holds the parts of speech to add (`add`) and the reason (`reason`).
 
 ```json
-{"word": "哇", "trad": "", "pinyin": "wā", "from": ["y", "o"], "pos": ["y", "o", "e"], "reason": "主な語義「わあ」（CC-CEDICT: Wow!）は感嘆詞だが、上流の品詞に感嘆詞が無い"}
+{"word": "哇", "trad": "", "pinyin": "wā", "add": ["e"], "reason": "主な語義「わあ」（CC-CEDICT: Wow!）は感嘆詞だが、上流の品詞に感嘆詞が無い"}
 ```
 
-Application stops if an entry's parts of speech match neither `from` nor `pos`, so that a change in the upstream source is never overwritten unnoticed. It also stops if a record has no matching entry. Entries already updated are left alone, so repeated runs produce the same bytes. There is currently one record.
+A record only adds parts of speech and never removes the ones from the source, so application does not stop when the source changes.
+
+- If an entry already has every part of speech to add, it is left alone and counted as "already present". If that count appears right after rebuilding the data, the source has gained the same tag and the record can be removed.
+- If a record has no matching entry, a warning is printed and the other records are still applied.
+- When an entry has no `pos`, it is placed after `hsk3` and before `src`, so running this before or after `apply_primary.py` gives the same bytes.
+- Application stops only on malformed records or duplicate entries in the data.
+
+There is currently one record.
 
 ### The entry key is a triple
 
@@ -366,8 +373,8 @@ An excerpt of the real file, with the body of `sources` elided.
       "entries_supplement": 32813,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 7434065,
-      "uncompressed_bytes": 32197658
+      "bytes": 7434067,
+      "uncompressed_bytes": 32197662
     },
     "ja-zh/glosses.jsonl": {"lines": 40000}
   },
@@ -543,7 +550,7 @@ python3 tools/build_dataset.py \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
 
-# Apply the confirmed primary senses, default entries, and part-of-speech overrides, then update the common data
+# Apply the confirmed primary senses, default entries, and part-of-speech additions, then update the common data
 python3 tools/apply_primary.py
 python3 tools/apply_pos.py
 python3 tools/export_common.py
@@ -635,7 +642,7 @@ SOFTWARE.
 
 ### 2026-10-24 — Interjection tag added to 哇
 
-Added the interjection tag (`e`) to the parts of speech of 哇 wā (`y`, `o` → `y`, `o`, `e`), so that a subtitle-learning app does not read the interjection 「わあ」 as a word note. The mechanism for recording and applying part-of-speech overrides ([Part-of-speech overrides](#part-of-speech-overrides)) was added at the same time.
+Added the interjection tag (`e`) to the parts of speech of 哇 wā (`y`, `o` → `y`, `o`, `e`), so that a subtitle-learning app does not read the interjection 「わあ」 as a word note. The mechanism for recording and applying part-of-speech additions ([Part-of-speech additions](#part-of-speech-additions)) was added at the same time.
 
 ### 2026-09-06 — Rebuilt on CC-CEDICT (schema 3)
 
