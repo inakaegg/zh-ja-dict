@@ -17,9 +17,9 @@
 
 区分ごとの検品の度合いは [qa の意味](#qa-の意味) を見てください。
 
-- 中日 `data/zh-ja/entries.jsonl.deflate` 157,798 entry・229,130 語義（圧縮後 7,434,065 バイト、展開すると 32,197,658 バイト）。日中 `data/ja-zh/glosses.jsonl` 40,000行
+- 中日 `data/zh-ja/entries.jsonl.deflate` 157,798 entry・229,130 語義（圧縮後 7,434,067 バイト、展開すると 32,197,662 バイト）。日中 `data/ja-zh/glosses.jsonl` 40,000行
 - `data/common/entries.jsonl.deflate` は、同じ中日157,798 entry・229,130語義を共通形式v2へ写した監査・SQLite生成用データです
-- アプリ向けの `data/common/dictionary.sqlite3` は同じ内容を検索用SQLiteにした71,471,104バイトの成果物です。監査用JSONLはアプリへ同梱しません
+- アプリ向けの `data/common/dictionary.sqlite3` は同じ内容を検索用SQLiteにした72,003,584バイトの成果物です。監査用JSONLはアプリへ同梱しません
 - 中日の1行は **1 entry**です。(簡体字, 繁体字, 読み) の3つ組で一意になります
 - **中日は圧縮して同梱します。** raw DEFLATE（RFC 1951）です（[圧縮の形](#圧縮の形)）
 - 検品の度合いは語義ごとに違います。`qa` の欄で見分けられます
@@ -78,7 +78,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 
 `NSData.DecompressionAlgorithm.zlib` と C の `COMPRESSION_ZLIB` は、名前に反して**ヘッダ無しの DEFLATE** を指します。ここで zlib ヘッダを付けると、書く側は何も気付かないまま読む側だけが壊れます。読み書きの正本は `tools/entries_file.py` です。
 
-同梱しているのは 7,434,065 バイトで、展開すると 32,197,658 バイトになります（**23.1%**）。
+同梱しているのは 7,434,067 バイトで、展開すると 32,197,662 バイトになります（**23.1%**）。
 
 `zlib` は圧縮の流れが途中で切れていても例外を出しません。途中まで展開して黙って終わるので、**流れの終わりの印を確かめてください**。`tools/entries_file.py` はこれを確かめます。
 
@@ -93,7 +93,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `also_pr` | string | 任意 | 別の読み |
 | `hsk2` | 整数 | 任意 | HSK 2.0 の級（1〜6）。[HSKの級](#hskの級)を参照 |
 | `hsk3` | 整数 | 任意 | HSK 3.0 の級（1〜7） |
-| `pos` | string の配列 | 任意 | 品詞。HSK の資料の略号をそのまま使います（`n`・`v`・`u` など） |
+| `pos` | string の配列 | 任意 | 品詞。HSK の資料の略号をそのまま使います（`n`・`v`・`u` など）。上流に無い品詞を足した行は[品詞を足す記録](#品詞を足す記録)を参照 |
 | `cl` | 配列 | 任意 | 量詞。要素は `{"w": 簡体字, "t": 繁体字, "py": 読み}` |
 | `src` | string | 任意 | 補遺 entry にだけ付き、値は `"zh-ja-dict"` です |
 | `seed` | string | 任意 | 旧版の訳を作成の候補として渡した entry に付き、値はその訳の検品の区分です |
@@ -123,6 +123,25 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `default` | 4,025 |
 
 主な語義と既定の行の正本は `data/inputs/primary-senses.jsonl` と `data/inputs/default-rows.jsonl` です。行は `word`・`trad`（省略時は空文字）・`pinyin` で対応させ、語義の番号と `ja` の一致を確かめます。記録の不足・存在しない行・訳の不一致・既定の重複があれば適用を止めます。再実行では既存の `primary`・`default` を消してから適用します。共通形式では項目の `extensions["zh-ja-dict"]` の `primary_sense`（整数）・`default_row`（`true` のみ）へ写します。
+
+### 品詞を足す記録
+
+品詞は HSK の資料（complete-hsk-vocabulary）の値を使います。ただし、資料に感嘆詞の印（`e`）が無い語があります。たとえば哇 wā は、主な語義「わあ」（CC-CEDICT では Wow!）が感嘆詞なのに、品詞は語気詞・擬声語（`y`・`o`）だけです。
+
+こうした行には `data/inputs/pos-additions.jsonl` の記録で品詞を足し、`tools/apply_pos.py` で適用します。1行が1件の記録で、`word`・`trad`・`pinyin` で行を特定し、足す品詞（`add`）と理由（`reason`）を持ちます。
+
+```json
+{"word": "哇", "trad": "", "pinyin": "wā", "add": ["e"], "reason": "主な語義「わあ」（CC-CEDICT: Wow!）は感嘆詞だが、上流の品詞に感嘆詞が無い"}
+```
+
+記録は品詞を足すだけで、資料のほかの品詞は消しません。資料の版が変わっても、適用は止まりません。
+
+- 足す品詞が既にあれば、その行は変えずに「既にあった」と数えます。データを作り直した直後に数が出たら、資料が同じ品詞を持つようになったので、その記録の行を消せます。記録がすべて要らなくなっても、ファイルは空にして残します。
+- 記録に対応する行が無ければ、警告を出して残りを適用します。最後の要約にも「行が無い」の件数を出します。
+- 品詞の無い行に足すときは、`hsk3` の後ろ、`src` の前に `pos` を置きます。`apply_primary.py` と順を入れ替えても、同じバイト列になります。
+- 記録とデータの照合で止まるのは、記録の形が不正なときと、データに同じ行が2つあるときです。ファイルが無い・読めないときも止まります。
+
+現在の記録は1件です。
 
 ### entry の鍵は3つ組です
 
@@ -354,8 +373,8 @@ CC-CEDICT の丸括弧の注記のうち、**語感・地域・修辞を表す�
       "entries_supplement": 32813,
       "senses": 229130,
       "compression": "deflate",
-      "bytes": 7434065,
-      "uncompressed_bytes": 32197658
+      "bytes": 7434067,
+      "uncompressed_bytes": 32197662
     },
     "ja-zh/glosses.jsonl": {"lines": 40000}
   },
@@ -531,8 +550,9 @@ python3 tools/build_dataset.py \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
 
-# 主な語義と既定の行を確定済みの記録から適用し、共通形式を更新する
+# 主な語義・既定の行・品詞を足す記録を確定済みの記録から適用し、共通形式を更新する
 python3 tools/apply_primary.py
+python3 tools/apply_pos.py
 python3 tools/export_common.py
 
 # 4. 全件検査。旧版と HSK の元データを渡すと、取りこぼしまで見る
@@ -619,6 +639,10 @@ SOFTWARE.
 - 言語混入の検査にも抜けがあります。許可リストには一般的な英単語（`live` `house` `look` `boss` `play` `flag`）や単独の英字（`A`〜`X`）が載っており、これらの語で新しい生成失敗が起きても検出できません。また許可リストは中日と日中で共用のため、片方でだけ正当な語がもう片方でも通ります
 
 ## 修正履歴
+
+### 2026-10-24 — 哇の品詞に感嘆詞を足す
+
+哇 wā の品詞へ感嘆詞（`e`）を足しました（`y`・`o` → `y`・`o`・`e`）。字幕学習アプリの語注で、感嘆詞の「わあ」を読ませないためです。品詞を足す記録を適用する仕組み（[品詞を足す記録](#品詞を足す記録)）も、このとき加えました。
 
 ### 2026-09-06 — CC-CEDICT を骨格に作り直し（schema 3）
 
