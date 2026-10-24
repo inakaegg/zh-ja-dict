@@ -95,7 +95,7 @@ The shipped file is 7,434,065 bytes and expands to 32,197,658 (**23.1%**).
 | `also_pr` | string | optional | Alternative reading |
 | `hsk2` | integer | optional | HSK 2.0 level (1–6). See [HSK levels](#hsk-levels) |
 | `hsk3` | integer | optional | HSK 3.0 level (1–7) |
-| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …) |
+| `pos` | array of strings | optional | Parts of speech, using the HSK source's abbreviations as they are (`n`, `v`, `u`, …). For entries whose upstream part of speech is corrected, see [Part-of-speech overrides](#part-of-speech-overrides) |
 | `cl` | array | optional | Measure words. Elements are `{"w": simplified, "t": traditional, "py": reading}` |
 | `src` | string | optional | Present only on supplement entries, with the value `"zh-ja-dict"` |
 | `seed` | string | optional | Present when the previous version's gloss was offered as a candidate; the value is that gloss's check category |
@@ -125,6 +125,18 @@ Entries carrying each optional key:
 | `default` | 4,025 |
 
 The source records are `data/inputs/primary-senses.jsonl` and `data/inputs/default-rows.jsonl`. Entries match by `word`, `trad` (empty when absent), and `pinyin`; each sense number is checked against its `ja` translation. Missing records, nonexistent entries, mismatched translations, or duplicate defaults abort application. Each run removes existing `primary` and `default` before applying the records again. The common format stores them in entry `extensions["zh-ja-dict"]` as `primary_sense` (integer) and `default_row` (`true` only).
+
+### Part-of-speech overrides
+
+Parts of speech come from the HSK source (complete-hsk-vocabulary). Some entries in that source lack the interjection tag (`e`). For example, 哇 wā has the interjection 「わあ」 (CC-CEDICT: Wow!) as its primary sense, yet its parts of speech are only modal particle and onomatopoeia (`y`, `o`).
+
+The parts of speech of such entries are corrected in `data/inputs/pos-overrides.jsonl` and applied with `tools/apply_pos.py`. Each line is one record. It identifies the entry by `word`, `trad`, and `pinyin`, and holds the original parts of speech (`from`), the new ones (`pos`), and the reason (`reason`).
+
+```json
+{"word": "哇", "trad": "", "pinyin": "wā", "from": ["y", "o"], "pos": ["y", "o", "e"], "reason": "主な語義「わあ」（CC-CEDICT: Wow!）は感嘆詞だが、上流の品詞に感嘆詞が無い"}
+```
+
+Application stops if an entry's parts of speech match neither `from` nor `pos`, so that a change in the upstream source is never overwritten unnoticed. It also stops if a record has no matching entry. Entries already updated are left alone, so repeated runs produce the same bytes. There is currently one record.
 
 ### The entry key is a triple
 
@@ -531,8 +543,9 @@ python3 tools/build_dataset.py \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
 
-# Apply the confirmed primary senses and default entries, then update the common data
+# Apply the confirmed primary senses, default entries, and part-of-speech overrides, then update the common data
 python3 tools/apply_primary.py
+python3 tools/apply_pos.py
 python3 tools/export_common.py
 
 # 4. Validate everything. Pass the previous version and the HSK seed to catch losses
@@ -619,6 +632,10 @@ SOFTWARE.
 - The language-leak check has gaps. The allowlist holds ordinary English words (`live`, `house`, `look`, `boss`, `play`, `flag`) and single letters (`A`–`X`), so a new generation failure in those words goes undetected. The allowlist is also shared between the two directions, so a word valid in one passes in the other
 
 ## Change history
+
+### 2026-10-24 — Interjection tag added to 哇
+
+Added the interjection tag (`e`) to the parts of speech of 哇 wā (`y`, `o` → `y`, `o`, `e`), so that a subtitle-learning app does not read the interjection 「わあ」 as a word note. The mechanism for recording and applying part-of-speech overrides ([Part-of-speech overrides](#part-of-speech-overrides)) was added at the same time.
 
 ### 2026-09-06 — Rebuilt on CC-CEDICT (schema 3)
 

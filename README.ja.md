@@ -93,7 +93,7 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `also_pr` | string | 任意 | 別の読み |
 | `hsk2` | 整数 | 任意 | HSK 2.0 の級（1〜6）。[HSKの級](#hskの級)を参照 |
 | `hsk3` | 整数 | 任意 | HSK 3.0 の級（1〜7） |
-| `pos` | string の配列 | 任意 | 品詞。HSK の資料の略号をそのまま使います（`n`・`v`・`u` など） |
+| `pos` | string の配列 | 任意 | 品詞。HSK の資料の略号をそのまま使います（`n`・`v`・`u` など）。上流の品詞を直した行は[品詞の上書き](#品詞の上書き)を参照 |
 | `cl` | 配列 | 任意 | 量詞。要素は `{"w": 簡体字, "t": 繁体字, "py": 読み}` |
 | `src` | string | 任意 | 補遺 entry にだけ付き、値は `"zh-ja-dict"` です |
 | `seed` | string | 任意 | 旧版の訳を作成の候補として渡した entry に付き、値はその訳の検品の区分です |
@@ -123,6 +123,18 @@ let plain = try (compressed as NSData).decompressed(using: .zlib) as Data
 | `default` | 4,025 |
 
 主な語義と既定の行の正本は `data/inputs/primary-senses.jsonl` と `data/inputs/default-rows.jsonl` です。行は `word`・`trad`（省略時は空文字）・`pinyin` で対応させ、語義の番号と `ja` の一致を確かめます。記録の不足・存在しない行・訳の不一致・既定の重複があれば適用を止めます。再実行では既存の `primary`・`default` を消してから適用します。共通形式では項目の `extensions["zh-ja-dict"]` の `primary_sense`（整数）・`default_row`（`true` のみ）へ写します。
+
+### 品詞の上書き
+
+品詞は HSK の資料（complete-hsk-vocabulary）の値を使います。ただし、資料に感嘆詞の印（`e`）が無い語があります。たとえば哇 wā は、主な語義「わあ」（CC-CEDICT では Wow!）が感嘆詞なのに、品詞は語気詞・擬声語（`y`・`o`）だけです。
+
+こうした行の品詞は `data/inputs/pos-overrides.jsonl` で直し、`tools/apply_pos.py` で適用します。1行が1件の記録で、`word`・`trad`・`pinyin` で行を特定し、元の品詞（`from`）・新しい品詞（`pos`）・理由（`reason`）を持ちます。
+
+```json
+{"word": "哇", "trad": "", "pinyin": "wā", "from": ["y", "o"], "pos": ["y", "o", "e"], "reason": "主な語義「わあ」（CC-CEDICT: Wow!）は感嘆詞だが、上流の品詞に感嘆詞が無い"}
+```
+
+データの品詞が `from` とも `pos` とも違えば、適用を止めます。上流の資料が変わったのに、気づかず上書きしないためです。記録に対応する行が無い場合も止めます。適用済みの行は変えないので、何度実行しても同じバイト列になります。現在の記録は1件です。
 
 ### entry の鍵は3つ組です
 
@@ -531,8 +543,9 @@ python3 tools/build_dataset.py \
     --repaired tmp/ja-full.jsonl.repaired \
     --moedict <dict-revised.json> --generated <YYYY-MM-DD> --out data
 
-# 主な語義と既定の行を確定済みの記録から適用し、共通形式を更新する
+# 主な語義・既定の行・品詞の上書きを確定済みの記録から適用し、共通形式を更新する
 python3 tools/apply_primary.py
+python3 tools/apply_pos.py
 python3 tools/export_common.py
 
 # 4. 全件検査。旧版と HSK の元データを渡すと、取りこぼしまで見る
@@ -619,6 +632,10 @@ SOFTWARE.
 - 言語混入の検査にも抜けがあります。許可リストには一般的な英単語（`live` `house` `look` `boss` `play` `flag`）や単独の英字（`A`〜`X`）が載っており、これらの語で新しい生成失敗が起きても検出できません。また許可リストは中日と日中で共用のため、片方でだけ正当な語がもう片方でも通ります
 
 ## 修正履歴
+
+### 2026-10-24 — 哇の品詞に感嘆詞を足す
+
+哇 wā の品詞へ感嘆詞（`e`）を足しました（`y`・`o` → `y`・`o`・`e`）。字幕学習アプリの語注で、感嘆詞の「わあ」を読ませないためです。品詞の上書きを記録して適用する仕組み（[品詞の上書き](#品詞の上書き)）も、このとき加えました。
 
 ### 2026-09-06 — CC-CEDICT を骨格に作り直し（schema 3）
 
